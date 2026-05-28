@@ -23,6 +23,9 @@ Say:
 
 You will get a ranked paper list, match reasons, applied filters, and weak/strong coverage status.
 
+Example: Search for papers about agent RL from the last two years, as comprehensive as possible
+[Agent RL Search](./examples/agent_rl_papers_en.md) | [中文版](./examples/agent_rl_papers.md)
+
 ### 2) Get a quick brief for one paper
 
 Say:
