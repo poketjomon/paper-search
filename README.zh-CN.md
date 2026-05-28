@@ -5,6 +5,7 @@
 papersearch 是一个面向 Claude Code 的论文研究 Skill。
 
 它可以帮你：
+
 - 按主题、会议或年份找论文
 - 快速判断一篇论文值不值得读
 - 对单篇论文做深度分析
@@ -22,6 +23,9 @@ papersearch 是一个面向 Claude Code 的论文研究 Skill。
 - `给我整理一份 2023-2025 年 VLA 方向的 related work 列表`
 
 你会得到：排序后的论文列表、匹配理由、筛选条件，以及本地语料覆盖情况。
+
+示例：给我搜索最近两年，关于agent rl的相关论文，尽可能全面
+[Agent RL Search](./examples/agent_rl_papers.md)
 
 ### 2) 快速看一篇论文
 
@@ -55,9 +59,11 @@ papersearch 是一个面向 Claude Code 的论文研究 Skill。
 ## 常见问题
 
 ### 这个 skill 只有“搜论文”吗？
+
 不是。它也支持单篇速读、深度调研，以及 Obsidian / Zotero 归档输出。
 
 ### 我需要手动指定 search/lookup/reader 吗？
+
 不需要。直接说目标即可。
 
 ## 本地调试
