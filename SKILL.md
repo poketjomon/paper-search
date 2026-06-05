@@ -23,7 +23,7 @@ The local search path should dynamically extract useful query fields, try a smal
 That same extracted concept bundle should drive remote fallback queries too, so fallback is planned retrieval rather than one raw sentence lookup.
 If local matches are weak, the subskill should say so explicitly and then use arXiv fallback rather than pretending generic local matches are enough.
 
-Run the `search/` subskill.
+Read and follow the instructions in `search/SKILL.md` (relative to this skill's directory).
 
 ## `lookup/`
 Use only when the user provides a specific arXiv id, arXiv URL, or alphaXiv URL and wants a fast paper brief for that one paper.
@@ -34,7 +34,7 @@ Examples:
 
 Do not use `lookup/` for bulk search, venue/year filtering, or topic-based paper collection.
 
-Run the `lookup/` subskill.
+Read and follow the instructions in `lookup/SKILL.md` (relative to this skill's directory).
 
 ## `reader/`
 Use when the user wants deeper one-paper analysis, full paper reading, or an explicit note/workflow task from a specific paper/PDF.
@@ -47,8 +47,9 @@ Examples:
 Default behavior: return deeper structured analysis for the specific paper.
 Advanced workflow mode only applies on explicit save / archive / sync / batch / Zotero / Obsidian / note intent.
 
-Run the `reader/` subskill.
+Read and follow the instructions in `reader/SKILL.md` (relative to this skill's directory).
 
 If the request is ambiguous, choose the lightest subskill that still answers it:
 - search before lookup
 - lookup before reader
+
