@@ -106,6 +106,33 @@ DEFAULT_CONFIG = {
         "git_commit": False,
         "git_push": False,
     },
+    "ai_backend": {
+        "type": "claude_code",
+        "claude_code": {
+            "command": "claude",
+            "model": "opus",
+            "extra_args": [
+                "--permission-mode", "acceptEdits",
+                "--dangerously-skip-permissions",
+            ],
+        },
+        "generic_cli": {
+            "command": "",
+            "args": [],
+            "input_mode": "stdin",
+            "prompt_arg": "-p",
+        },
+        "openai_api": {
+            "model": "gpt-4o",
+            "api_key_env": "OPENAI_API_KEY",
+            "base_url": "https://api.openai.com/v1",
+            "max_tokens": 16384,
+            "temperature": 0.7,
+        },
+    },
+    "daemon": {
+        "state_dir": "~/.papersearch",
+    },
 }
 
 
@@ -210,3 +237,27 @@ def temp_file_path(filename: str) -> Path:
         enriched_path = temp_file_path('daily_papers_enriched.json')
     """
     return temp_dir() / filename
+
+
+# ── AI backend configuration ─────────────────────────────────────────────────
+
+def ai_backend_config() -> dict:
+    return load_user_config()["ai_backend"]
+
+
+def ai_backend_type() -> str:
+    return ai_backend_config().get("type", "claude_code")
+
+
+def ai_backend_subconfig(name: str) -> dict:
+    return ai_backend_config().get(name, {})
+
+
+# ── Daemon configuration ──────────────────────────────────────────────────────
+
+def daemon_config() -> dict:
+    return load_user_config()["daemon"]
+
+
+def daemon_state_dir() -> Path:
+    return _expand(daemon_config().get("state_dir", "~/.papersearch"))

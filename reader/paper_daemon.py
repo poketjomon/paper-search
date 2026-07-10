@@ -4,7 +4,7 @@ Paper Reading Daemon - 后台论文阅读守护进程
 
 功能：
 1. 从 Zotero 获取指定分类的论文列表（递归子分类）
-2. 调用 Claude Code 逐篇处理
+2. 调用可配置的 AI backend 逐篇处理
 3. 遇到 rate limit 时自动等待并重试
 4. 支持断点续传
 
@@ -15,28 +15,43 @@ Paper Reading Daemon - 后台论文阅读守护进程
 
     # 查看进度
     python3 paper_daemon.py --status
+
+AI backend 在 _shared/user-config.json 的 "ai_backend" 段配置，
+支持 claude_code / generic_cli / openai_api 三种类型。
 """
 
 import os
 import sys
 import json
 import sqlite3
-import subprocess
 import shutil
 import time
 import argparse
 import logging
 import re
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
-from zoneinfo import ZoneInfo
 
 _SHARED_DIR = Path(__file__).resolve().parents[1] / "_shared"
 if str(_SHARED_DIR) not in sys.path:
     sys.path.insert(0, str(_SHARED_DIR))
 
-from user_config import concepts_dir, obsidian_vault_path, paper_notes_dir, zotero_db_path, zotero_storage_dir, temp_file_path
+_LIB_DIR = Path(__file__).resolve().parent / "lib"
+if str(_LIB_DIR) not in sys.path:
+    sys.path.insert(0, str(_LIB_DIR))
+
+from user_config import (
+    concepts_dir,
+    obsidian_vault_path,
+    paper_notes_dir,
+    zotero_db_path,
+    zotero_storage_dir,
+    temp_file_path,
+    daemon_state_dir,
+    ai_backend_type,
+)
+from ai_backend import AIBackend, RateLimitError, QuotaLimitError, BackendTimeoutError, AIBackendError, parse_reset_wait_seconds
 
 # 配置
 ZOTERO_DB = str(zotero_db_path())
@@ -44,7 +59,7 @@ ZOTERO_STORAGE = str(zotero_storage_dir())
 OBSIDIAN_VAULT = str(obsidian_vault_path())
 PAPER_NOTES_ROOT = str(paper_notes_dir())
 CONCEPTS_ROOT = str(concepts_dir())
-_DAEMON_STATE_DIR = os.path.expanduser(os.environ.get("PAPER_DAEMON_STATE_DIR", "~/.claude"))
+_DAEMON_STATE_DIR = str(daemon_state_dir())
 PROGRESS_FILE = os.path.join(_DAEMON_STATE_DIR, "paper_daemon_progress.json")
 LOG_FILE = os.path.join(_DAEMON_STATE_DIR, "paper_daemon.log")
 PID_FILE = os.path.join(_DAEMON_STATE_DIR, "paper_daemon.pid")
@@ -110,52 +125,6 @@ def wait_for_quota_reset(wait_seconds: Optional[int] = None):
     wait_minutes = max(1, wait_seconds // 60)
     logger.info(f"⏳ 配额受限，等待 {wait_minutes} 分钟...")
     time.sleep(wait_seconds)
-
-
-def detect_limit_error(output: str) -> Optional[str]:
-    """识别限额/限速错误类型"""
-    text = output.lower()
-    if 'rate limit' in text or 'too many requests' in text:
-        return 'RATE_LIMIT'
-    if 'hit your limit' in text or 'usage limit' in text or 'resets' in text:
-        return 'QUOTA_LIMIT'
-    return None
-
-
-def parse_reset_wait_seconds(message: str) -> Optional[int]:
-    """
-    解析 "resets 9pm (Asia/Shanghai)" 等提示，计算等待秒数
-    """
-    match = re.search(
-        r'resets\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?(?:\s*\(([^)]+)\))?',
-        message,
-        re.IGNORECASE
-    )
-    if not match:
-        return None
-
-    hour = int(match.group(1))
-    minute = int(match.group(2) or 0)
-    ampm = (match.group(3) or '').lower()
-    tz_name = match.group(4) or 'Asia/Shanghai'
-
-    if ampm == 'pm' and hour < 12:
-        hour += 12
-    if ampm == 'am' and hour == 12:
-        hour = 0
-
-    try:
-        tz = ZoneInfo(tz_name)
-    except Exception:
-        return None
-
-    now = datetime.now(tz)
-    target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    if target <= now:
-        target = target + timedelta(days=1)
-
-    wait_seconds = int((target - now).total_seconds())
-    return max(60, wait_seconds)
 
 
 def copy_zotero_db() -> str:
@@ -402,7 +371,7 @@ def save_progress(progress: dict):
 
 
 def build_analysis_prompt(source_info: str, no_pdf_instruction: str) -> str:
-    return f"""请使用 paper-reader skill 深读并分析这篇论文，输出 default structured analysis。
+    return f"""请深读并分析这篇论文，输出结构化分析。
 
 {source_info}
 {no_pdf_instruction}
@@ -440,7 +409,7 @@ def build_workflow_prompt(
     notes_root: str,
     concepts_root: str,
 ) -> str:
-    return f"""请使用 paper-reader skill 读取并分析这篇论文，生成完整的结构化笔记。
+    return f"""请读取并分析这篇论文，生成完整的结构化笔记。
 
 {source_info}
 Zotero 分类路径: {collection_path}
@@ -514,7 +483,7 @@ $$公式$$
 1. 分析完论文后，列出笔记中所有 [[概念]] 链接
 2. 检查每个概念是否已存在：查看 `{concepts_root}` 下已有概念笔记
 3. 对于不存在的概念，创建概念笔记文件
-4. 使用 Write 工具写入概念笔记
+4. 将概念笔记写入对应文件
 
 ## 自动分类与 Zotero 同步（重要）
 
@@ -547,9 +516,9 @@ $$公式$$
 
 
 
-def call_claude_code(paper_source: dict, collection_path: str, item_id: int, mode: str) -> tuple[bool, str]:
+def call_ai_backend(backend: AIBackend, paper_source: dict, collection_path: str, item_id: int, mode: str) -> tuple[bool, str]:
     """
-    调用 Claude Code 处理论文
+    调用 AI backend 处理论文
 
     paper_source 可以包含:
     - pdf_path: 本地 PDF 路径
@@ -589,9 +558,9 @@ def call_claude_code(paper_source: dict, collection_path: str, item_id: int, mod
         if arxiv_id:
             fallback_steps.extend(
                 [
-                    f"1. **arXiv HTML 版本**（推荐）: 用 WebFetch 读取 https://arxiv.org/html/{arxiv_id}，可直接获取图片 URL",
-                    f"2. **arXiv 摘要页**: 用 WebFetch 读取 https://arxiv.org/abs/{arxiv_id}",
-                    f"3. **arXiv PDF**: 下载 https://arxiv.org/pdf/{arxiv_id}.pdf 到本地后用 Read 读取",
+                    f"1. **arXiv HTML 版本**（推荐）: 读取 https://arxiv.org/html/{arxiv_id}，可直接获取图片 URL",
+                    f"2. **arXiv 摘要页**: 读取 https://arxiv.org/abs/{arxiv_id}",
+                    f"3. **arXiv PDF**: 下载 https://arxiv.org/pdf/{arxiv_id}.pdf 到本地后读取",
                 ]
             )
         if paper_source.get('doi'):
@@ -625,35 +594,33 @@ def call_claude_code(paper_source: dict, collection_path: str, item_id: int, mod
     )
 
     try:
-        result = subprocess.run(
-            ['claude', '-p', prompt, '--model', 'opus', '--permission-mode', 'acceptEdits', '--dangerously-skip-permissions'],
-            capture_output=True,
-            text=True,
-            timeout=900  # 15分钟超时（因为要提取图片）
-        )
-
-        output = result.stdout + result.stderr
-
-        limit_type = detect_limit_error(output)
-        if limit_type == 'RATE_LIMIT':
-            return False, 'RATE_LIMIT'
-        if limit_type == 'QUOTA_LIMIT':
-            return False, f'QUOTA_LIMIT|{output[:200]}'
-
-        if result.returncode == 0:
-            return True, ''
-        else:
-            return False, output[:500]
-
-    except subprocess.TimeoutExpired:
+        backend.process(prompt, timeout=900)
+        return True, ''
+    except RateLimitError:
+        return False, 'RATE_LIMIT'
+    except QuotaLimitError as e:
+        return False, f'QUOTA_LIMIT|{str(e)}'
+    except BackendTimeoutError:
         return False, 'TIMEOUT'
+    except AIBackendError as e:
+        return False, str(e)
     except Exception as e:
         return False, str(e)
 
 
-def process_collection(collection_name: str, resume: bool = True, mode: str = 'workflow'):
+def process_collection(
+    collection_name: str,
+    resume: bool = True,
+    mode: str = 'workflow',
+    backend: Optional[AIBackend] = None,
+):
     """处理整个分类的论文"""
     logger.info(f"=== 开始处理分类: {collection_name} ===")
+
+    # 创建 AI backend 实例
+    if backend is None:
+        backend = AIBackend.from_config()
+    logger.info(f"AI backend: {type(backend).__name__}")
 
     db_path = copy_zotero_db()
 
@@ -727,7 +694,7 @@ def process_collection(collection_name: str, resume: bool = True, mode: str = 'w
         progress['current'] = {'item_id': item_id, 'title': title}
         save_progress(progress)
 
-        success, error = call_claude_code(paper_source, collection_path, item_id, mode)
+        success, error = call_ai_backend(backend, paper_source, collection_path, item_id, mode)
 
         if success:
             logger.info(f"✓ 完成: {title[:50]}")
@@ -793,11 +760,47 @@ def show_status():
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Paper Reading Daemon')
+    parser = argparse.ArgumentParser(
+        description='Paper Reading Daemon',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+AI backend 选择（不需要改配置文件，命令行直接指定）:
+  # 用 Claude Code（默认）
+  python3 paper_daemon.py -c "VLA" --backend claude
+
+  # 用 Codex CLI
+  python3 paper_daemon.py -c "VLA" --backend codex
+
+  # 用 OpenAI API
+  python3 paper_daemon.py -c "VLA" --backend openai
+
+  # 自定义 CLI 工具
+  python3 paper_daemon.py -c "VLA" --backend codex \\
+      --cli-args "exec,--sandbox,workspace-write,--skip-git-repo-check"
+
+  # 用 OpenAI API + 自定义模型
+  python3 paper_daemon.py -c "VLA" --backend openai \\
+      --api-model gpt-4-turbo --api-key-env MY_OPENAI_KEY
+
+不指定 --backend 时，从 _shared/user-config.json 的 ai_backend.type 读取。
+        """.strip(),
+    )
     parser.add_argument('--collection', '-c', type=str, help='Zotero 分类名称')
     parser.add_argument('--status', '-s', action='store_true', help='显示当前状态')
+    parser.add_argument('--list', '-l', action='store_true', help='列出 Zotero 分类')
     parser.add_argument('--no-resume', action='store_true', help='不恢复之前的进度')
     parser.add_argument('--mode', choices=['analysis', 'workflow'], default='workflow', help='批处理模式：analysis 为默认结构化分析，workflow 为完整归档流程')
+
+    # AI backend 参数
+    parser.add_argument('--backend', choices=['claude', 'codex', 'openai'],
+                        help='AI backend 预设（不指定则从配置文件读取）')
+    parser.add_argument('--cli-command', help='覆盖 CLI 命令（如 codex, aider）')
+    parser.add_argument('--cli-args', help='CLI 参数，逗号分隔（如 exec,--sandbox,workspace-write）')
+    parser.add_argument('--cli-input-mode', choices=['stdin', 'arg'], help='CLI prompt 输入模式')
+    parser.add_argument('--cli-prompt-arg', help='prompt 参数名（空字符串=位置参数，如 "" 或 -p）')
+    parser.add_argument('--api-model', help='API 模型名（如 gpt-4o, claude-opus-4）')
+    parser.add_argument('--api-key-env', help='API key 环境变量名（如 OPENAI_API_KEY）')
+    parser.add_argument('--api-base-url', help='API base URL（OpenAI 兼容端点）')
 
     args = parser.parse_args()
 
@@ -827,13 +830,31 @@ def main():
         parser.print_help()
         return
 
+    # 构建 AI backend
+    backend = AIBackend.from_cli_args(
+        preset=args.backend,
+        cli_command=args.cli_command,
+        cli_args=args.cli_args,
+        cli_input_mode=args.cli_input_mode,
+        cli_prompt_arg=args.cli_prompt_arg,
+        api_model=args.api_model,
+        api_key_env=args.api_key_env,
+        api_base_url=args.api_base_url,
+    )
+    logger.info(f"AI backend: {type(backend).__name__}")
+
     # 检查是否已有进程在运行
     if not acquire_lock():
-        logger.error("另一个 paper_daemon 进程正在运行！请先停止它或删除 ~/.claude/paper_daemon.pid")
+        logger.error(f"另一个 paper_daemon 进程正在运行！请先停止它或删除 {PID_FILE}")
         return
 
     try:
-        process_collection(args.collection, resume=not args.no_resume, mode=args.mode)
+        process_collection(
+            args.collection,
+            resume=not args.no_resume,
+            mode=args.mode,
+            backend=backend,
+        )
     finally:
         release_lock()
 

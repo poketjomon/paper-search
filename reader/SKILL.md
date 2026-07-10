@@ -17,6 +17,64 @@ Run:
 
 This subskill is integrated from the dailypaper skills `paper-reader` workflow, with local suite routing plus shared `_shared/**` config.
 
+## AI Backend 选择（重要）
+
+paper_daemon 支持通过 `--backend` 参数直接指定 AI 框架，**不需要改配置文件**。
+
+### 预设 backend
+
+| `--backend` | 对应工具 | 说明 |
+|---|---|---|
+| `claude` | Claude Code CLI | 默认，`claude -p "prompt" --model opus` |
+| `codex` | OpenAI Codex CLI | `codex exec --sandbox workspace-write "prompt"` |
+| `openai` | OpenAI API | 通过 `OPENAI_API_KEY` 环境变量调用 |
+
+用法示例:
+
+```bash
+# Claude Code（默认，不指定也是这个）
+./scripts/run.sh reader -c "VLA" --backend claude
+
+# Codex CLI
+./scripts/run.sh reader -c "VLA" --backend codex
+
+# OpenAI API
+./scripts/run.sh reader -c "VLA" --backend openai
+```
+
+### 自定义覆盖参数
+
+在预设基础上可以用额外参数覆盖:
+
+```bash
+# Codex + 额外参数
+./scripts/run.sh reader -c "VLA" --backend codex \
+    --cli-args "exec,--sandbox,workspace-write,--skip-git-repo-check"
+
+# OpenAI + 自定义模型和 key
+./scripts/run.sh reader -c "VLA" --backend openai \
+    --api-model gpt-4-turbo --api-key-env MY_OPENAI_KEY
+
+# 任意 CLI 工具（不使用预设）
+./scripts/run.sh reader -c "VLA" \
+    --cli-command aider --cli-args "--model,gpt-4o" --cli-input-mode stdin
+```
+
+### 完整参数列表
+
+| 参数 | 说明 |
+|---|---|
+| `--backend` | 预设名称：`claude` / `codex` / `openai` |
+| `--cli-command` | 覆盖 CLI 命令 |
+| `--cli-args` | CLI 参数，逗号分隔 |
+| `--cli-input-mode` | `stdin` 或 `arg` |
+| `--cli-prompt-arg` | prompt 参数名（空字符串=位置参数） |
+| `--api-model` | API 模型名 |
+| `--api-key-env` | API key 环境变量名 |
+| `--api-base-url` | API base URL（OpenAI 兼容端点） |
+
+不指定 `--backend` 时，从 `_shared/user-config.json` 的 `ai_backend.type` 读取。
+
 ## What this subskill is for
 
 Use `reader/` when the paper is already known and the user wants more than a quick brief.

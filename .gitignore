@@ -16,3 +16,4 @@ sdist
 develop-eggs
 .installed.cfg
 *.egg-info
+.qoder
