@@ -12,7 +12,7 @@
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
-🌐 [简体中文](./README.zh-CN.md) · [English](./README.md) · **繁體中文**　|　[📥 30 秒裝上](#-30-秒裝上) · [🎬 怎麼用](#-怎麼用) · [📊 它長什麼樣](#-它長什麼樣) · [❓ FAQ](#-faq)
+🌐 [简体中文](./README.zh-CN.md) · [English](./README.md) · **繁體中文**　|　[🎬 怎麼用](#-怎麼用) · [📊 它長什麼樣](#-它長什麼樣) · [📚 知識庫歸檔](#-打造你的論文知識庫zotero--obsidian) · [❓ FAQ](#-faq)
 
 </div>
 
@@ -38,41 +38,11 @@
 | **Zotero 重度使用者** | BibTeX 匯出、全文搜尋、安全移動分類（走 Zotero 本地 API） |
 | **工具開發者** | 核心功能全是命令列腳本，不裝 agent 也能用，可直接接進自己的 pipeline |
 
-## ⚡ 30 秒裝上
-
-### 方式一：裝進你的 agent 框架（推薦）
-
-```bash
-git clone https://github.com/<your-name>/papersearch.git
-
-# Claude Code
-ln -s "$PWD/papersearch" ~/.claude/skills/papersearch
-
-# Codex
-ln -s "$PWD/papersearch" ~/.codex/skills/papersearch
-```
-
-其他框架（Qoder / Cursor / 自建 agent）：核心要求只有兩個——agent 能讀到頂層 `SKILL.md`（路由契約），能執行 `./scripts/run.sh`。按各自框架的 skill 安裝方式接入即可。
-
-### 方式二：純命令列（零安裝）
-
-不裝任何 agent 也能用全部核心功能：
-
-```bash
-./scripts/run.sh <search|lookup|reader> [args...]
-```
-
-### 驗證安裝
-
-```bash
-./scripts/run.sh search "find iclr papers about world model"
-```
-
-看到論文表格輸出就說明裝好了。
-
 ## 🎬 怎麼用
 
-安裝後在 agent 對話裡說出以下任一句即可觸發：
+把本倉庫作為 skill 裝進你的 agent 框架（Claude Code / Codex / Qoder 等，按各自框架的方式載入即可），或者不裝任何 agent 直接跑命令列：`./scripts/run.sh <search|lookup|reader> [args...]`。
+
+然後在 agent 對話裡說出以下任一句即可觸發：
 
 - 「幫我找 2024 ICLR 上 diffusion policy 的論文，最好有程式碼和專案連結」
 - 「給我整理一份 2023-2025 年 VLA 方向的 related work 列表」
@@ -84,6 +54,73 @@ ln -s "$PWD/papersearch" ~/.codex/skills/papersearch
 - "Is this paper worth reading: https://arxiv.org/abs/2303.04137"
 
 你不需要記住 search / lookup / reader 三個子技能——路由層會自動選最輕的方式完成（能速覽就不深讀，能本地查就不走網路）。
+
+### 你說 → 你得到（真實輸出）
+
+**例 1：找一批論文**
+
+> 你說：「找 ICLR 上 world model 的論文」
+
+你得到：
+
+```text
+Found 5 papers for: world model
+
+Filters: venue=ICLR
+
+Local status: strong
+
+| Year | Venue | Title                                        | Link   | Why                                        |
+| ---- | ----- | -------------------------------------------- | ------ | ------------------------------------------ |
+| 2025 | ICLR  | Dream to Manipulate: Compositional World ... | [link] | venue match, title match, keyword match ... |
+| 2025 | ICLR  | Hierarchical World Models as Visual Whole... | [link] | venue match, title match, keyword match ... |
+| 2025 | ICLR  | FLIP: Flow-Centric Generative Planning as... | [link] | venue match, title match, keyword match ... |
+```
+
+**例 2：30 秒速覽**
+
+> 你說：「這篇值不值得讀：https://arxiv.org/abs/2303.04137」
+
+你得到：
+
+```text
+論文：Diffusion Policy: Visuomotor Policy Learning via Action Diffusion（2303.04137）
+一句話結論：This paper introduces Diffusion Policy, a new way of generating robot
+           behavior by representing a robot's visuomotor policy as a conditional
+           denoising diffusion process.
+核心方法：
+- To fully unlock the potential of diffusion models for visuomotor policy
+  learning on physical robots, this paper presents a set of key technical
+  contributions ...
+值不值得讀：先看摘要即可；這版主要依賴 arXiv fallback。
+來源：arXiv 摘要 fallback。可信度：基礎（alphaXiv: http_error）。
+```
+
+**例 3：匯出參考文獻（走 Zotero 本地 API）**
+
+> 你說：「把我 Zotero 庫裡的論文匯出成 references.bib」
+
+你得到：
+
+```text
+{
+  "output": "/path/to/references.bib",
+  "bytes": 873883,
+  "bibtex_entries": 254
+}
+```
+
+```bibtex
+@misc{wuSurveyLargeLanguage2024,
+    title = {A survey on large language models for recommendation},
+    url = {http://arxiv.org/abs/2305.19860},
+    author = {Wu, Likang and Zheng, Zhi and ...},
+    year = {2024},
+    note = {arXiv:2305.19860 [cs]}
+}
+```
+
+更多歸檔場景（論文變筆記、批量處理）見 [📚 打造你的論文知識庫](#-打造你的論文知識庫zotero--obsidian)。
 
 <details>
 <summary><b>子技能詳細用法（篩選語法 / 輸出格式 / 命令列參數）</b></summary>
@@ -173,12 +210,36 @@ Saved markdown report: search/outputs/latest_search_results.md
 
 最後兩行告訴你資訊從哪來、可信度多少——alphaXiv 詳細報告 > arXiv 摘要，系統不會為了好看而編造。
 
-### 3. 歸檔筆記 —— 論文變知識庫
+## 📚 打造你的論文知識庫（Zotero × Obsidian）
 
-<details>
-<summary><b>展開看產生的筆記包含什麼</b></summary>
+這是套件最重的能力：把論文變成互相連結的 Obsidian 知識庫，同時整理你的 Zotero 文獻庫。**只在你明確要求歸檔時啟用**，普通深讀永遠不碰你的檔案。
 
-依 [`reader/assets/paper-note-template.md`](reader/assets/paper-note-template.md) 產生：
+### 一次性設定
+
+新建 `_shared/user-config.local.json`（不進 git），告訴套件你的 vault 和 Zotero 在哪：
+
+```json
+{
+  "paths": {
+    "obsidian_vault": "~/Documents/MyObsidianVault",
+    "zotero_db": "~/Zotero/zotero.sqlite",
+    "zotero_storage": "~/Zotero/storage"
+  }
+}
+```
+
+（可選但推薦）在 Zotero 裡開啟本地 API：設定 > 進階 > 勾選「允許本機其他應用與 Zotero 通信」。開啟後移動分類會走 API（比直寫資料庫更安全），並解鎖 BibTeX 匯出、全文搜尋。
+
+### 歸檔單篇論文
+
+在 agent 裡明確說出歸檔意圖：
+
+- 「讀這篇論文並產生 Obsidian 筆記，包含關鍵圖表和公式說明」
+- 「把這篇論文歸檔到 Zotero 的 VLA 分類」
+
+工作流會依序：取得內容（本地 PDF 優先，否則 arXiv HTML → PDF → DOI）→ 產生歸檔級筆記 → 存入對應分類目錄 → 為新概念建立概念筆記 → 必要時把論文移到合理的 Zotero 分類（基於對論文的理解判斷，不是關鍵詞匹配；拿不準的筆記放 `_待整理/`）。
+
+產生的筆記依 [`reader/assets/paper-note-template.md`](reader/assets/paper-note-template.md) 範本，包含：
 
 - **YAML frontmatter**：標題、方法名、作者、年份、會議、標籤、Zotero 分類
 - **元資訊表格**：機構、日期、專案主頁、對比基線、連結
@@ -186,14 +247,36 @@ Saved markdown report: search/outputs/latest_search_results.md
 - **方法詳解**：模組拆解，技術術語全部內嵌 `[[概念]]` 連結
 - **關鍵公式**：每個公式都有「含義 + 符號說明」
 - **關鍵圖表**：`### Figure X: 英文標題 / 中文標題` + 圖片來源 + 說明
-- **實驗**：資料集、實作細節、定性結果
 - **批判性思考**：優點、局限、改進方向、可重現性 checklist
-- **關聯筆記**：依「基於 / 對比 / 方法相關 / 硬體資料」分類
-- **速查卡片**：Obsidian callout 格式的快速參考
+- **關聯筆記** + **速查卡片**（Obsidian callout）
 
-歸檔流程還會：為新概念自動建概念筆記、把論文移動到合理的 Zotero 分類（基於對論文的理解判斷，不是關鍵詞匹配）、拿不準的筆記放 `_待整理/`。
+### 批量處理：把 Zotero 整個分類變成筆記
 
-</details>
+```bash
+./scripts/run.sh reader --list       # 看 Zotero 裡有哪些分類
+./scripts/run.sh reader -c "VLA"     # 批量處理（遞迴包含子分類）
+./scripts/run.sh reader --status     # 另開終端看進度
+```
+
+`--list` 真實輸出：
+
+```text
+=== Zotero 分類 ===
+  GUI: 6 篇
+  LLM: 3 篇
+  PRML: 2 篇
+  Value論文: 9 篇
+  agent: 1 篇
+```
+
+智慧行為：已有筆記的論文自動跳過；沒有本地 PDF 的自動改用線上來源；中斷後重跑同一指令自動續傳；遇到 rate limit 自動退避等待，全程無需人工干預。
+
+### 最終你的知識庫裡會多出什麼
+
+- `{vault}/論文筆記/` —— 每篇論文一份歸檔級筆記，帶公式、圖表、概念連結
+- `{vault}/論文筆記/_概念/` —— 概念庫，隨筆記自動建設並與筆記互鏈
+- MOC 索引頁 —— 目錄級的導覽頁，可自動產生（`_shared/generate_*_mocs.py`）
+- 整理過的 Zotero 分類 —— 論文從臨時分類移到合理位置
 
 ## 🔧 多 agent 框架切換
 
@@ -347,6 +430,6 @@ python3 -m unittest search/tests/test_paper_search.py
 
 **用過覺得有用？給個 ⭐ 是對作者最大的鼓勵。**
 
-[⬆ 回到頂部](#papersearch) · [📥 裝一個](#-30-秒裝上) · [🎬 怎麼用](#-怎麼用)
+[⬆ 回到頂部](#papersearch) · [🎬 怎麼用](#-怎麼用)
 
 </div>

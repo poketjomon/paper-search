@@ -12,7 +12,7 @@ Works with Claude Code, Codex, Qoder — any agent framework that can read a `SK
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
-🌐 [简体中文](./README.zh-CN.md) · **English** · [繁體中文](./README.zh-TW.md)　|　[📥 Install in 30s](#-install-in-30-seconds) · [🎬 How to use](#-how-to-use) · [📊 What it looks like](#-what-it-looks-like) · [❓ FAQ](#-faq)
+🌐 [简体中文](./README.zh-CN.md) · **English** · [繁體中文](./README.zh-TW.md)　|　[🎬 How to use](#-how-to-use) · [📊 What it looks like](#-what-it-looks-like) · [📚 Knowledge-base archival](#-build-your-paper-knowledge-base-zotero--obsidian) · [❓ FAQ](#-faq)
 
 </div>
 
@@ -38,41 +38,11 @@ Works with Claude Code, Codex, Qoder — any agent framework that can read a `SK
 | **A Zotero power user** | BibTeX export, full-text search, safe collection moves (via Zotero's local API) |
 | **A tool builder** | Every core feature is a CLI script — usable with no agent, embeddable in your own pipeline |
 
-## ⚡ Install in 30 seconds
-
-### Option 1: Install into your agent framework (recommended)
-
-```bash
-git clone https://github.com/<your-name>/papersearch.git
-
-# Claude Code
-ln -s "$PWD/papersearch" ~/.claude/skills/papersearch
-
-# Codex
-ln -s "$PWD/papersearch" ~/.codex/skills/papersearch
-```
-
-Other frameworks (Qoder / Cursor / custom agents): only two requirements — the agent can read the top-level `SKILL.md` (the routing contract) and execute `./scripts/run.sh`. Wire it up via your framework's skill installation mechanism.
-
-### Option 2: Standalone CLI (zero install)
-
-All core features work without any agent:
-
-```bash
-./scripts/run.sh <search|lookup|reader> [args...]
-```
-
-### Verify the installation
-
-```bash
-./scripts/run.sh search "find iclr papers about world model"
-```
-
-A paper table in the output means you're good.
-
 ## 🎬 How to use
 
-Once installed, say any of these in your agent:
+Load this repo as a skill in your agent framework (Claude Code / Codex / Qoder etc., via each framework's own mechanism), or skip agents entirely and run the CLI: `./scripts/run.sh <search|lookup|reader> [args...]`.
+
+Then say any of these in your agent:
 
 - “Find 2024 ICLR papers about diffusion policy, preferably with code and project links”
 - “Create a related-work list for VLA from 2023-2025”
@@ -84,6 +54,73 @@ Once installed, say any of these in your agent:
 - 「快速看一下这篇论文值不值得读：arXiv 2303.04137」
 
 You don't need to remember the three subskills — the router picks the lightest way to answer (brief before deep read, local before remote).
+
+### You say → you get (real output)
+
+**Example 1: Find papers in bulk**
+
+> You say: “Find ICLR papers about world model”
+
+You get:
+
+```text
+Found 5 papers for: world model
+
+Filters: venue=ICLR
+
+Local status: strong
+
+| Year | Venue | Title                                        | Link   | Why                                        |
+| ---- | ----- | -------------------------------------------- | ------ | ------------------------------------------ |
+| 2025 | ICLR  | Dream to Manipulate: Compositional World ... | [link] | venue match, title match, keyword match ... |
+| 2025 | ICLR  | Hierarchical World Models as Visual Whole... | [link] | venue match, title match, keyword match ... |
+| 2025 | ICLR  | FLIP: Flow-Centric Generative Planning as... | [link] | venue match, title match, keyword match ... |
+```
+
+**Example 2: 30-second brief**
+
+> You say: “Is this worth reading: https://arxiv.org/abs/2303.04137”
+
+You get:
+
+```text
+Paper: Diffusion Policy: Visuomotor Policy Learning via Action Diffusion (2303.04137)
+Takeaway: This paper introduces Diffusion Policy, a new way of generating robot
+          behavior by representing a robot's visuomotor policy as a conditional
+          denoising diffusion process.
+Core method:
+- To fully unlock the potential of diffusion models for visuomotor policy
+  learning on physical robots, this paper presents a set of key technical
+  contributions ...
+Worth reading? Abstract-first; this brief relies on the arXiv fallback.
+Source: arXiv abstract fallback. Confidence: basic (alphaXiv: http_error).
+```
+
+**Example 3: Export references (via Zotero local API)**
+
+> You say: “Export my Zotero library to references.bib”
+
+You get:
+
+```text
+{
+  "output": "/path/to/references.bib",
+  "bytes": 873883,
+  "bibtex_entries": 254
+}
+```
+
+```bibtex
+@misc{wuSurveyLargeLanguage2024,
+    title = {A survey on large language models for recommendation},
+    url = {http://arxiv.org/abs/2305.19860},
+    author = {Wu, Likang and Zheng, Zhi and ...},
+    year = {2024},
+    note = {arXiv:2305.19860 [cs]}
+}
+```
+
+For archival scenarios (papers into notes, batch processing), see [📚 Build your paper knowledge base](#-build-your-paper-knowledge-base-zotero--obsidian).
 
 <details>
 <summary><b>Subskill details (filter syntax / output formats / CLI flags)</b></summary>
@@ -173,12 +210,36 @@ Source: arXiv abstract fallback. Confidence: basic (alphaXiv: http_error).
 
 The last two lines tell you where the information came from and how much to trust it — alphaXiv detailed reports > arXiv abstracts. The system never invents missing details.
 
-### 3. Archival notes — papers become a knowledge base
+## 📚 Build your paper knowledge base (Zotero × Obsidian)
 
-<details>
-<summary><b>Expand to see what generated notes contain</b></summary>
+The heaviest capability: turn papers into a cross-linked Obsidian knowledge base while organizing your Zotero library. **Only activates on explicit archival requests** — plain deep reading never touches your files.
 
-Generated from [`reader/assets/paper-note-template.md`](reader/assets/paper-note-template.md):
+### One-time setup
+
+Create `_shared/user-config.local.json` (gitignored) to tell the suite where your vault and Zotero live:
+
+```json
+{
+  "paths": {
+    "obsidian_vault": "~/Documents/MyObsidianVault",
+    "zotero_db": "~/Zotero/zotero.sqlite",
+    "zotero_storage": "~/Zotero/storage"
+  }
+}
+```
+
+(Optional but recommended) Enable Zotero's local API: Settings > Advanced > check "Allow other applications on this computer to communicate with Zotero". Once enabled, collection moves go through the API (safer than writing the database directly), and BibTeX export plus full-text search are unlocked.
+
+### Archive a single paper
+
+State the archival intent explicitly in your agent:
+
+- “Read this paper and generate an Obsidian note with key figures and formula explanations”
+- “Archive this paper into the VLA collection in Zotero”
+
+The workflow then: fetches content (local PDF first; otherwise arXiv HTML → PDF → DOI) → generates an archival-quality note → saves it under the matching collection folder → creates concept notes for new concepts → moves the paper to a sensible Zotero collection when needed (based on understanding the paper, not keyword matching; uncertain notes go to `_待整理/`).
+
+Generated notes follow [`reader/assets/paper-note-template.md`](reader/assets/paper-note-template.md):
 
 - **YAML frontmatter**: title, method name, authors, year, venue, tags, Zotero collection
 - **Meta table**: affiliations, date, project page, baselines, links
@@ -186,14 +247,36 @@ Generated from [`reader/assets/paper-note-template.md`](reader/assets/paper-note
 - **Method breakdown**: per-module detail with inline `[[concept]]` links on every technical term
 - **Key formulas**: each with a "meaning + symbol glossary" section
 - **Key figures/tables**: `### Figure X: English title / 中文标题` + image source + explanation
-- **Experiments**: datasets, implementation details, qualitative results
 - **Critical thinking**: strengths, limitations, improvement directions, reproducibility checklist
-- **Related notes**: grouped by "built on / compared with / method-related / hardware-data"
-- **Quick-reference card**: an Obsidian callout summary
+- **Related notes** + **quick-reference card** (Obsidian callout)
 
-The archival flow also: creates concept notes for new concepts, moves papers to sensible Zotero collections (based on understanding the paper, not keyword matching), and puts uncertain notes into `_待整理/`.
+### Batch processing: a whole Zotero collection into notes
 
-</details>
+```bash
+./scripts/run.sh reader --list       # see your Zotero collections
+./scripts/run.sh reader -c "VLA"     # batch-process (recursively includes subcollections)
+./scripts/run.sh reader --status     # check progress from another terminal
+```
+
+Real `--list` output:
+
+```text
+=== Zotero 分类 ===
+  GUI: 6 篇
+  LLM: 3 篇
+  PRML: 2 篇
+  Value论文: 9 篇
+  agent: 1 篇
+```
+
+Smart behavior: papers with existing notes are skipped automatically; papers without a local PDF fall back to online sources; rerunning after an interruption resumes automatically; rate limits trigger automatic backoff — no intervention needed.
+
+### What ends up in your knowledge base
+
+- `{vault}/论文笔记/` — one archival-quality note per paper, with formulas, figures, and concept links
+- `{vault}/论文笔记/_概念/` — a concept library, auto-built and cross-linked with the notes
+- MOC index pages — directory-level navigation pages, auto-generated (`_shared/generate_*_mocs.py`)
+- Organized Zotero collections — papers moved from temporary folders to sensible homes
 
 ## 🔧 Switching AI backends
 
@@ -347,6 +430,6 @@ python3 -m unittest search/tests/test_paper_search.py
 
 **Find it useful? A ⭐ is the best encouragement.**
 
-[⬆ Back to top](#papersearch) · [📥 Install](#-install-in-30-seconds) · [🎬 How to use](#-how-to-use)
+[⬆ Back to top](#papersearch) · [🎬 How to use](#-how-to-use)
 
 </div>

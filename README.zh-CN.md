@@ -12,7 +12,7 @@
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
-🌐 **简体中文** · [English](./README.md) · [繁體中文](./README.zh-TW.md)　|　[📥 30 秒装上](#-30-秒装上) · [🎬 怎么用](#-怎么用) · [📊 它长什么样](#-它长什么样) · [❓ FAQ](#-faq)
+🌐 **简体中文** · [English](./README.md) · [繁體中文](./README.zh-TW.md)　|　[🎬 怎么用](#-怎么用) · [📊 它长什么样](#-它长什么样) · [📚 知识库归档](#-构建你的论文知识库zotero--obsidian) · [❓ FAQ](#-faq)
 
 </div>
 
@@ -38,41 +38,11 @@
 | **Zotero 重度用户** | BibTeX 导出、全文搜索、安全移动分类（走 Zotero 本地 API） |
 | **工具开发者** | 核心功能全是命令行脚本，不装 agent 也能用，可直接接进自己的 pipeline |
 
-## ⚡ 30 秒装上
-
-### 方式一：装进你的 agent 框架（推荐）
-
-```bash
-git clone https://github.com/<your-name>/papersearch.git
-
-# Claude Code
-ln -s "$PWD/papersearch" ~/.claude/skills/papersearch
-
-# Codex
-ln -s "$PWD/papersearch" ~/.codex/skills/papersearch
-```
-
-其他框架（Qoder / Cursor / 自建 agent）：核心要求只有两个——agent 能读到顶层 `SKILL.md`（路由契约），能执行 `./scripts/run.sh`。按各自框架的 skill 安装方式接入即可。
-
-### 方式二：纯命令行（零安装）
-
-不装任何 agent 也能用全部核心功能：
-
-```bash
-./scripts/run.sh <search|lookup|reader> [args...]
-```
-
-### 验证安装
-
-```bash
-./scripts/run.sh search "find iclr papers about world model"
-```
-
-看到论文表格输出就说明装好了。
-
 ## 🎬 怎么用
 
-安装后在 agent 对话里说出以下任一句即可触发：
+把本仓库作为 skill 装进你的 agent 框架（Claude Code / Codex / Qoder 等，按各自框架的方式加载即可），或者不装任何 agent 直接跑命令行：`./scripts/run.sh <search|lookup|reader> [args...]`。
+
+然后在 agent 对话里说出以下任一句即可触发：
 
 - 「帮我找 2024 ICLR 上 diffusion policy 的论文，最好有代码和项目链接」
 - 「给我整理一份 2023-2025 年 VLA 方向的 related work 列表」
@@ -84,6 +54,73 @@ ln -s "$PWD/papersearch" ~/.codex/skills/papersearch
 - "Is this paper worth reading: https://arxiv.org/abs/2303.04137"
 
 你不需要记住 search / lookup / reader 三个子技能——路由层会自动选最轻的方式完成（能速览就不深读，能本地查就不走网络）。
+
+### 你说 → 你得到（真实输出）
+
+**例 1：找一批论文**
+
+> 你说：「找 ICLR 上 world model 的论文」
+
+你得到：
+
+```text
+Found 5 papers for: world model
+
+Filters: venue=ICLR
+
+Local status: strong
+
+| Year | Venue | Title                                        | Link   | Why                                        |
+| ---- | ----- | -------------------------------------------- | ------ | ------------------------------------------ |
+| 2025 | ICLR  | Dream to Manipulate: Compositional World ... | [link] | venue match, title match, keyword match ... |
+| 2025 | ICLR  | Hierarchical World Models as Visual Whole... | [link] | venue match, title match, keyword match ... |
+| 2025 | ICLR  | FLIP: Flow-Centric Generative Planning as... | [link] | venue match, title match, keyword match ... |
+```
+
+**例 2：30 秒速览**
+
+> 你说：「这篇值不值得读：https://arxiv.org/abs/2303.04137」
+
+你得到：
+
+```text
+论文：Diffusion Policy: Visuomotor Policy Learning via Action Diffusion（2303.04137）
+一句话结论：This paper introduces Diffusion Policy, a new way of generating robot
+           behavior by representing a robot's visuomotor policy as a conditional
+           denoising diffusion process.
+核心方法：
+- To fully unlock the potential of diffusion models for visuomotor policy
+  learning on physical robots, this paper presents a set of key technical
+  contributions ...
+值不值得读：先看摘要即可；这版主要依赖 arXiv fallback。
+来源：arXiv 摘要 fallback。可信度：基础（alphaXiv: http_error）。
+```
+
+**例 3：导出参考文献（走 Zotero 本地 API）**
+
+> 你说：「把我 Zotero 库里的论文导出成 references.bib」
+
+你得到：
+
+```text
+{
+  "output": "/path/to/references.bib",
+  "bytes": 873883,
+  "bibtex_entries": 254
+}
+```
+
+```bibtex
+@misc{wuSurveyLargeLanguage2024,
+    title = {A survey on large language models for recommendation},
+    url = {http://arxiv.org/abs/2305.19860},
+    author = {Wu, Likang and Zheng, Zhi and ...},
+    year = {2024},
+    note = {arXiv:2305.19860 [cs]}
+}
+```
+
+更多归档场景（论文变笔记、批量处理）见 [📚 构建你的论文知识库](#-构建你的论文知识库zotero--obsidian)。
 
 <details>
 <summary><b>子技能详细用法（筛选语法 / 输出格式 / 命令行参数）</b></summary>
@@ -173,27 +210,73 @@ Saved markdown report: search/outputs/latest_search_results.md
 
 最后两行告诉你信息从哪来、可信度多少——alphaXiv 详细报告 > arXiv 摘要，系统不会为了好看而编造。
 
-### 3. 归档笔记 —— 论文变知识库
+## 📚 构建你的论文知识库（Zotero × Obsidian）
 
-<details>
-<summary><b>展开看生成的笔记包含什么</b></summary>
+这是套件最重的能力：把论文变成互相链接的 Obsidian 知识库，同时整理你的 Zotero 文献库。**只在你明确要求归档时启用**，普通深读永远不碰你的文件。
 
-按 [`reader/assets/paper-note-template.md`](reader/assets/paper-note-template.md) 生成：
+### 一次性设置
+
+新建 `_shared/user-config.local.json`（不进 git），告诉套件你的 vault 和 Zotero 在哪：
+
+```json
+{
+  "paths": {
+    "obsidian_vault": "~/Documents/MyObsidianVault",
+    "zotero_db": "~/Zotero/zotero.sqlite",
+    "zotero_storage": "~/Zotero/storage"
+  }
+}
+```
+
+（可选但推荐）在 Zotero 里开启本地 API：设置 > 高级 > 勾选「允许本机其他应用与 Zotero 通信」。开启后移动分类会走 API（比直写数据库更安全），并解锁 BibTeX 导出、全文搜索。
+
+### 归档单篇论文
+
+在 agent 里明确说出归档意图：
+
+- 「读这篇论文并生成 Obsidian 笔记，包含关键图表和公式说明」
+- 「把这篇论文归档到 Zotero 的 VLA 分类」
+
+工作流会依次：获取内容（本地 PDF 优先，否则 arXiv HTML → PDF → DOI）→ 生成归档级笔记 → 存入对应分类目录 → 为新概念创建概念笔记 → 必要时把论文移到合理的 Zotero 分类（基于对论文的理解判断，不是关键词匹配；拿不准的笔记放 `_待整理/`）。
+
+生成的笔记按 [`reader/assets/paper-note-template.md`](reader/assets/paper-note-template.md) 模板，包含：
 
 - **YAML frontmatter**：标题、方法名、作者、年份、会议、标签、Zotero 分类
 - **元信息表格**：机构、日期、项目主页、对比基线、链接
 - **一句话总结** + **核心贡献**
 - **方法详解**：模块拆解，技术术语全部内联 `[[概念]]` 链接
-- **关键公式**：每个公式都有"含义 + 符号说明"
+- **关键公式**：每个公式都有“含义 + 符号说明”
 - **关键图表**：`### Figure X: 英文标题 / 中文标题` + 图片来源 + 说明
-- **实验**：数据集、实现细节、定性结果
 - **批判性思考**：优点、局限、改进方向、可复现性 checklist
-- **关联笔记**：按"基于 / 对比 / 方法相关 / 硬件数据"分类
-- **速查卡片**：Obsidian callout 格式的快速参考
+- **关联笔记** + **速查卡片**（Obsidian callout）
 
-归档流程还会：为新概念自动建概念笔记、把论文移动到合理的 Zotero 分类（基于对论文的理解判断，不是关键词匹配）、拿不准的笔记放 `_待整理/`。
+### 批量处理：把 Zotero 整个分类变成笔记
 
-</details>
+```bash
+./scripts/run.sh reader --list       # 看 Zotero 里有哪些分类
+./scripts/run.sh reader -c "VLA"     # 批量处理（递归包含子分类）
+./scripts/run.sh reader --status     # 另开终端看进度
+```
+
+`--list` 真实输出：
+
+```text
+=== Zotero 分类 ===
+  GUI: 6 篇
+  LLM: 3 篇
+  PRML: 2 篇
+  Value论文: 9 篇
+  agent: 1 篇
+```
+
+智能行为：已有笔记的论文自动跳过；没有本地 PDF 的自动改用在线来源；中断后重跑同一命令自动续传；遇到 rate limit 自动退避等待，全程无需人工干预。
+
+### 最终你的知识库里会多出什么
+
+- `{vault}/论文笔记/` —— 每篇论文一份归档级笔记，带公式、图表、概念链接
+- `{vault}/论文笔记/_概念/` —— 概念库，随笔记自动建设并与笔记互链
+- MOC 索引页 —— 目录级的导航页，可自动生成（`_shared/generate_*_mocs.py`）
+- 整理过的 Zotero 分类 —— 论文从临时分类移到合理位置
 
 ## 🔧 多 agent 框架切换
 
@@ -347,6 +430,6 @@ python3 -m unittest search/tests/test_paper_search.py
 
 **用过觉得有用？给个 ⭐ 是对作者最大的鼓励。**
 
-[⬆ 回到顶部](#papersearch) · [📥 装一个](#-30-秒装上) · [🎬 怎么用](#-怎么用)
+[⬆ 回到顶部](#papersearch) · [🎬 怎么用](#-怎么用)
 
 </div>
