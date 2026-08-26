@@ -174,6 +174,10 @@ Use `references/zotero-guide.md` only when the task actually involves Zotero wor
 
 These rules apply only in advanced workflow mode.
 
+### Obsidian syntax
+
+All vault notes (paper notes and concept notes) must follow Obsidian Flavored Markdown as specified in `../obsidian_skills/obsidian-markdown/SKILL.md` — wikilinks, embeds, callouts, and frontmatter properties. Read that skill before writing any vault note; consult its `references/` for callout, embed, and property details when needed.
+
 ### Template
 
 Use `assets/paper-note-template.md` for vault-ready note generation. Do not treat it as the default output contract for ordinary analysis.
@@ -199,6 +203,7 @@ These actions are advanced-only.
 When the user explicitly asks to save or archive:
 - choose method-name-based filenames
 - save under the appropriate Zotero collection path when known
+- when moving an item between Zotero collections, prefer the local API via `../zotero_skills/zotero/SKILL.md` if Zotero Desktop is running with the local API enabled; fall back to `assets/zotero_helper.py` otherwise
 - use the existing YAML/frontmatter conventions
 - refresh indexes only when `AUTO_REFRESH_INDEXES=true`
 - run git steps only when enabled by config
@@ -209,7 +214,7 @@ These actions are advanced-only.
 
 If workflow mode requires concept maintenance:
 1. scan note content for `[[概念]]` links
-2. check whether concept notes already exist
+2. check whether concept notes already exist (prefer `../obsidian_skills/obsidian-cli/` for fast vault search when the Obsidian CLI is available; otherwise list the concept directory)
 3. create missing concept notes in the appropriate concept directory
 
 ## Batch behavior
@@ -227,6 +232,10 @@ After default analysis, useful follow-ups include:
 ## Reference files
 
 Consult these only when needed:
+- `../obsidian_skills/obsidian-markdown/SKILL.md` — Obsidian syntax rules for all vault notes (advanced mode)
+- `../obsidian_skills/obsidian-cli/SKILL.md` — vault search / note operations via Obsidian CLI (advanced mode)
+- `../obsidian_skills/obsidian-bases/SKILL.md` — `.base` views when the user wants a paper-library view (advanced mode)
+- `../zotero_skills/zotero/SKILL.md` — Zotero local API: moving collections (write ops), BibTeX export, full-text search (advanced mode)
 - `references/zotero-guide.md` — Zotero lookup, collection, and PDF-path workflows
 - `references/image-troubleshooting.md` — image fallback and figure extraction edge cases
 - `references/concept-categories.md` — concept-note categorization rules

@@ -1,66 +1,136 @@
+<div align="center">
+
 # papersearch
 
-🌐 [English](README.md) | [简体中文](README.zh-CN.md) | **繁體中文**
+### 找論文、速覽論文、精讀論文、把論文變成你的知識庫筆記——四件事，一個套件搞定。
 
-> 面向 AI Agent 的論文研究技能套件（Skill Suite）。
-> 支援 Claude Code、Codex、Qoder 等任何能讀取 `SKILL.md` 並執行 shell 指令的 agent 框架，也可以不裝任何 agent、純命令列直接使用。
+面向 AI Agent 的論文研究技能套件：**本地優先檢索 11 個頂級會議**論文資料集、**30 秒速覽**判斷一篇論文值不值得讀、**結構化深讀**，還能把論文**一鍵歸檔**成帶公式、圖表、概念連結的 Obsidian 筆記。
 
-## 它能做什麼
+支援 Claude Code、Codex、Qoder 等任何能讀取 `SKILL.md` 並執行 shell 指令的 agent 框架，也可以不裝任何 agent、純命令列直接使用。
 
-| 子技能 | 用途 | 一句話範例 |
-|---|---|---|
-| **search** | 依主題 / 會議 / 年份批量找論文 | 「幫我找 2024 ICLR 上 diffusion policy 的論文，要有程式碼」 |
-| **lookup** | 單篇論文 30 秒速覽，判斷值不值得讀 | 「快速看一下 arXiv 2303.04137」 |
-| **reader** | 單篇論文深度分析 | 「深度分析這篇論文的方法和實驗設計」 |
-| **歸檔工作流** | 產生 Obsidian 筆記、維護 Zotero 分類（需明確觸發） | 「讀這篇論文並歸檔到我的 Obsidian 筆記庫」 |
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square)
+![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
-特點：
+🌐 [简体中文](./README.zh-CN.md) · [English](./README.md) · **繁體中文**　|　[📥 30 秒裝上](#-30-秒裝上) · [🎬 怎麼用](#-怎麼用) · [📊 它長什麼樣](#-它長什麼樣) · [❓ FAQ](#-faq)
 
-- **本地優先檢索**：內建 11 個頂級會議（AAAI / ACL / AI4X / EMNLP / ICCV / ICLR / ICML / IJCAI / KDD / NeurIPS / WWW）論文資料集，也識別 CORL 會議（無本地資料時自動回退 arXiv），本地覆蓋不足時如實回報
-- **零依賴**：純 Python 標準函式庫，不需要 pip 安裝任何東西
-- **多框架相容**：批處理守護進程支援 Claude Code / Codex / OpenAI API 等後端，命令列一鍵切換
+</div>
 
-## 安裝
+---
 
-### 方式一：裝進你的 Agent 框架（推薦）
+## ✨ 它能給你什麼
 
-把本倉庫放進 agent 的 skills 目錄即可，agent 會自動讀取 `SKILL.md` 完成路由：
+- **找一批論文** — 依主題 / 會議 / 年份 / 有無程式碼檢索，輸出排序列表 + 每篇的匹配理由；本地覆蓋弱時**如實回報**並回退 arXiv，不拿不相關結果敷衍你（[完整範例](./examples/agent_rl_papers.md)）
+- **30 秒判斷值不值得讀** — 給一個 arXiv / alphaXiv 連結，輸出結論 + 資訊來源可信度，缺什麼明說，絕不編造
+- **結構化深讀** — 問題、方法、實驗、局限一次講清；預設只分析，**不動你的任何檔案**
+- **歸檔進知識庫** — 產生帶公式、圖表、`[[概念]]` 連結的 Obsidian 筆記，自動維護概念庫、整理 Zotero 分類（只在你明確要求時啟用）
+- **完全零依賴** — 純 Python 標準函式庫，clone 下來就能跑，不需要 pip install 任何東西
+- **多 agent 框架** — 批處理支援 Claude Code / Codex / OpenAI API，`--backend` 一個參數切換，不用改設定檔
+- **斷點續傳** — 批量處理中斷後重跑同一指令即可繼續，自動跳過已完成的論文
+
+## 🎯 誰會想用
+
+| 你是 | 你能用它做什麼 |
+| --- | --- |
+| **寫 related work 的研究生** | 一句話檢索某方向近幾年的頂會論文，帶匹配理由和程式碼連結，不用逐個會議官網翻 |
+| **追新論文的研究者** | 刷到 arXiv 連結先丟進去速覽 30 秒，值不值得讀一目了然，再決定要不要精讀 |
+| **知識庫建設者** | 把 Zotero 整個分類批量變成帶公式圖表的 Obsidian 筆記，自動建概念庫和互鏈 |
+| **Zotero 重度使用者** | BibTeX 匯出、全文搜尋、安全移動分類（走 Zotero 本地 API） |
+| **工具開發者** | 核心功能全是命令列腳本，不裝 agent 也能用，可直接接進自己的 pipeline |
+
+## ⚡ 30 秒裝上
+
+### 方式一：裝進你的 agent 框架（推薦）
 
 ```bash
+git clone https://github.com/<your-name>/papersearch.git
+
 # Claude Code
-ln -s "$PWD" ~/.claude/skills/papersearch
+ln -s "$PWD/papersearch" ~/.claude/skills/papersearch
 
 # Codex
-ln -s "$PWD" ~/.codex/skills/papersearch
+ln -s "$PWD/papersearch" ~/.codex/skills/papersearch
 ```
 
-其他框架（Qoder、Cursor 等）請參考各自的 skill / plugin 安裝方式，核心要求只有一個：agent 能讀到 `SKILL.md`，並能執行 `./scripts/run.sh`。
+其他框架（Qoder / Cursor / 自建 agent）：核心要求只有兩個——agent 能讀到頂層 `SKILL.md`（路由契約），能執行 `./scripts/run.sh`。按各自框架的 skill 安裝方式接入即可。
 
-裝好後直接用自然語言提問：
+### 方式二：純命令列（零安裝）
 
-```text
-幫我找 2024 ICLR 上 diffusion policy 的論文，最好有程式碼和專案連結
-快速看一下這篇論文值不值得讀：https://arxiv.org/abs/2303.04137
-深度分析這篇論文的方法、實驗設計和局限
-```
-
-### 方式二：純命令列使用（零安裝）
-
-不裝任何 agent 也能用，直接跑腳本：
+不裝任何 agent 也能用全部核心功能：
 
 ```bash
 ./scripts/run.sh <search|lookup|reader> [args...]
 ```
 
-## 功能展示（真實輸出）
-
-### 1) search：找一批論文
+### 驗證安裝
 
 ```bash
 ./scripts/run.sh search "find iclr papers about world model"
 ```
 
-輸出（節選）：
+看到論文表格輸出就說明裝好了。
+
+## 🎬 怎麼用
+
+安裝後在 agent 對話裡說出以下任一句即可觸發：
+
+- 「幫我找 2024 ICLR 上 diffusion policy 的論文，最好有程式碼和專案連結」
+- 「給我整理一份 2023-2025 年 VLA 方向的 related work 列表」
+- 「快速看一下這篇論文值不值得讀：https://arxiv.org/abs/2303.04137」
+- 「深度分析這篇論文的方法、實驗設計和局限」
+- 「讀這篇論文並歸檔到我的 Obsidian 筆記庫」
+- 「把 Zotero 裡 VLA 分類的論文匯出成 references.bib」
+- "Find 2024 ICLR papers about diffusion policy, preferably with code"
+- "Is this paper worth reading: https://arxiv.org/abs/2303.04137"
+
+你不需要記住 search / lookup / reader 三個子技能——路由層會自動選最輕的方式完成（能速覽就不深讀，能本地查就不走網路）。
+
+<details>
+<summary><b>子技能詳細用法（篩選語法 / 輸出格式 / 命令列參數）</b></summary>
+
+### search：批量檢索
+
+自然語言裡直接寫篩選條件，不需要學特殊語法：
+
+| 篩選 | 寫法範例 |
+|---|---|
+| 會議 | `ICLR`、`ICML`、`NeurIPS`、`AAAI`、`ACL`、`EMNLP`、`ICCV`、`IJCAI`、`KDD`、`WWW`、`CORL` |
+| 年份 | `2024` 或範圍 `2023-2025` |
+| 資源 | `with code`、`with pdf` |
+
+本地資料覆蓋 11 個頂級會議（見 `search/journal/`）；CORL 無本地資料時自動走 arXiv 回退並明確標註 `Fallback: arXiv`。結果同時儲存為 `search/outputs/latest_search_results.md`。
+
+### lookup：單篇速覽
+
+支援的輸入：`2303.04137`、`1706.03762v7`、arXiv 連結、alphaXiv 連結。
+
+```bash
+./scripts/run.sh lookup "2303.04137" --format brief-zh   # 中文簡報
+./scripts/run.sh lookup "2303.04137" --format brief      # 英文簡報
+./scripts/run.sh lookup --input-file papers.txt --format brief   # 批量（每行一個 ID）
+```
+
+格式選項：`brief` / `brief-zh` / `markdown` / `text` / `json` / `json-compact`。
+
+### reader：深讀與批處理
+
+```bash
+./scripts/run.sh reader -c "VLA"        # 批量處理 Zotero 分類（遞迴子分類）
+./scripts/run.sh reader --status        # 查看進度
+./scripts/run.sh reader --list          # 列出 Zotero 分類
+```
+
+預設只做結構化分析；只有明確提到**儲存 / 歸檔 / Obsidian / Zotero / 批處理**時才進入歸檔工作流。
+
+</details>
+
+## 📊 它長什麼樣
+
+### 1. search —— 找一批論文
+
+```bash
+./scripts/run.sh search "find iclr papers about world model"
+```
 
 ```text
 Found 5 papers for: world model
@@ -78,25 +148,13 @@ Local status: strong
 Saved markdown report: search/outputs/latest_search_results.md
 ```
 
-支援的篩選條件（自然語言裡直接寫就行）：
+怎麼讀：**Filters** 是系統從你話裡解析出的條件（確認它理解對了）；**Local status** 弱時說明結果來自 arXiv 回退；**Why** 是每篇的命中理由，方便判斷相關性。
 
-- 會議：`ICLR`、`ICML`、`NeurIPS`、`AAAI`、`ACL`、`EMNLP`、`ICCV`、`IJCAI`、`KDD`、`WWW`、`CORL`（CORL 無本地資料，自動走 arXiv 回退）
-- 年份：`2024` 或範圍 `2023-2025`
-- 資源：`with code`、`with pdf`
-
-本地匹配較弱時會明確回報 `Local status: weak` 並自動用 arXiv API 補充，不會拿不相關的結果敷衍你。
-
-完整範例：搜尋最近兩年 Agent RL 相關論文 → [examples/agent_rl_papers.md](./examples/agent_rl_papers.md)
-
-### 2) lookup：單篇速覽
-
-給一個 arXiv ID 或連結，30 秒判斷值不值得讀：
+### 2. lookup —— 30 秒速覽
 
 ```bash
 ./scripts/run.sh lookup "2303.04137" --format brief-zh
 ```
-
-輸出（節選）：
 
 ```text
 論文：Diffusion Policy: Visuomotor Policy Learning via Action Diffusion（2303.04137）
@@ -113,122 +171,182 @@ Saved markdown report: search/outputs/latest_search_results.md
 來源：arXiv 摘要 fallback。可信度：基礎（alphaXiv: http_error）。
 ```
 
-可選格式：`--format brief`（英文簡報）| `brief-zh`（中文簡報）| `markdown` | `text` | `json`
+最後兩行告訴你資訊從哪來、可信度多少——alphaXiv 詳細報告 > arXiv 摘要，系統不會為了好看而編造。
 
-支援的輸入：`2401.12345`、`https://arxiv.org/abs/2401.12345`、`https://www.alphaxiv.org/overview/2401.12345`
+### 3. 歸檔筆記 —— 論文變知識庫
 
-### 3) reader：深度閱讀
+<details>
+<summary><b>展開看產生的筆記包含什麼</b></summary>
+
+依 [`reader/assets/paper-note-template.md`](reader/assets/paper-note-template.md) 產生：
+
+- **YAML frontmatter**：標題、方法名、作者、年份、會議、標籤、Zotero 分類
+- **元資訊表格**：機構、日期、專案主頁、對比基線、連結
+- **一句話總結** + **核心貢獻**
+- **方法詳解**：模組拆解，技術術語全部內嵌 `[[概念]]` 連結
+- **關鍵公式**：每個公式都有「含義 + 符號說明」
+- **關鍵圖表**：`### Figure X: 英文標題 / 中文標題` + 圖片來源 + 說明
+- **實驗**：資料集、實作細節、定性結果
+- **批判性思考**：優點、局限、改進方向、可重現性 checklist
+- **關聯筆記**：依「基於 / 對比 / 方法相關 / 硬體資料」分類
+- **速查卡片**：Obsidian callout 格式的快速參考
+
+歸檔流程還會：為新概念自動建概念筆記、把論文移動到合理的 Zotero 分類（基於對論文的理解判斷，不是關鍵詞匹配）、拿不準的筆記放 `_待整理/`。
+
+</details>
+
+## 🔧 多 agent 框架切換
+
+批處理需要呼叫 AI 逐篇處理論文。預設 Claude Code，`--backend` 一鍵切換，**不用改設定檔**：
 
 ```bash
-./scripts/run.sh reader -c "VLA"                # 批量處理 Zotero 的 VLA 分類
-./scripts/run.sh reader --status                # 查看批處理進度
-./scripts/run.sh reader --list                  # 列出 Zotero 所有分類
+./scripts/run.sh reader -c "VLA" --backend claude    # 預設
+./scripts/run.sh reader -c "VLA" --backend codex     # Codex CLI
+./scripts/run.sh reader -c "VLA" --backend openai    # OpenAI API（需 OPENAI_API_KEY）
 ```
 
-在 agent 裡則直接說：「幫我深讀這篇論文」「讀這篇論文並產生 Obsidian 歸檔筆記」。
-
-預設只做結構化分析（問題、方法、實驗、局限）；只有你明確提到 **儲存 / 歸檔 / Obsidian / Zotero / 批處理** 時才會進入歸檔工作流（寫筆記、建概念庫、移動 Zotero 分類）。
-
-## 多 Agent 框架支援
-
-批量處理（`paper_daemon.py`）需要呼叫 AI 處理每篇論文。預設用 Claude Code，但可以透過 `--backend` 參數一鍵切換，**不需要改任何設定檔**：
-
-```bash
-# Claude Code（預設）
-./scripts/run.sh reader -c "VLA" --backend claude
-
-# OpenAI Codex CLI
-./scripts/run.sh reader -c "VLA" --backend codex
-
-# OpenAI API（需要 OPENAI_API_KEY 環境變數）
-./scripts/run.sh reader -c "VLA" --backend openai
-
-# 任意 CLI 工具（連預設都不用）
-./scripts/run.sh reader -c "VLA" \
-    --cli-command aider --cli-args "--model,gpt-4o" --cli-input-mode stdin
-```
-
-| `--backend` | 對應工具 | 實際呼叫 |
-|---|---|---|
-| `claude` | Claude Code CLI | `claude -p "prompt" --model opus ...` |
-| `codex` | Codex CLI | `codex exec --sandbox workspace-write "prompt"` |
-| `openai` | OpenAI 相容 API | HTTP POST `/chat/completions` |
-
-更細的覆蓋參數（`--cli-command`、`--cli-args`、`--api-model`、`--api-key-env`、`--api-base-url` 等）見 `./scripts/run.sh reader --help`。
-
-## 設定
-
-所有設定在 [`_shared/user-config.json`](_shared/user-config.json)，主要分五段：
-
-| 設定段 | 內容 |
+| `--backend` | 實際呼叫 |
 |---|---|
-| `paths` | Obsidian vault、論文筆記目錄、Zotero 資料庫路徑 |
-| `daily_papers` | arXiv 每日論文的關鍵字過濾規則 |
-| `automation` | 是否自動重新整理索引、是否 git commit/push |
-| `ai_backend` | AI 後端類型及參數（`claude_code` / `generic_cli` / `openai_api`） |
-| `daemon` | 批處理狀態目錄（進度、日誌、鎖檔） |
+| `claude` | `claude -p "prompt" --model opus --permission-mode acceptEdits ...` |
+| `codex` | `codex exec --sandbox workspace-write "prompt"` |
+| `openai` | HTTP POST `{base_url}/chat/completions` |
 
-個人客製化不要直接改 `user-config.json`，而是新建 `_shared/user-config.local.json` 做覆蓋（已加入 `.gitignore`）：
+還能細粒度覆蓋（`--cli-command` / `--cli-args` / `--api-model` / `--api-key-env` / `--api-base-url`），甚至直接接入任意 CLI 工具：
+
+```bash
+./scripts/run.sh reader -c "VLA" --cli-command aider --cli-args "--model,gpt-4o" --cli-input-mode stdin
+```
+
+完整參數：`./scripts/run.sh reader --help`。優先級：命令列參數 > `user-config.local.json` > `user-config.json` > 內建預設值。
+
+## 🗂️ 配套技能（隨倉庫附帶，無需單獨安裝）
+
+| 技能 | 幹什麼 | 什麼時候被用到 |
+|---|---|---|
+| `obsidian_skills/obsidian-markdown` | Obsidian 語法規範（wikilinks / callouts / embeds / frontmatter） | 每次歸檔寫筆記時自動遵循 |
+| `obsidian_skills/obsidian-cli` | 透過 CLI 搜尋 / 操作 vault | 概念查重、vault 搜尋（需本機裝 Obsidian CLI） |
+| `obsidian_skills/obsidian-bases` | `.base` 資料庫視圖 | 你想要論文庫的可篩選視圖時 |
+| `zotero_skills/zotero` | Zotero 本地 API：安全移動分類、BibTeX 匯出、全文搜尋 | Zotero 桌面版執行且開啟本地 API 時 |
+
+分工原則：Zotero 關閉時的批量唯讀查詢走內建 SQLite 方案（`reader/assets/zotero_helper.py`）；寫操作和 API 獨有能力（BibTeX / 全文搜尋）走本地 API。
+
+## ⚙️ 設定
+
+所有設定在 [`_shared/user-config.json`](_shared/user-config.json)。個人客製化請新建 `_shared/user-config.local.json`（已 gitignore）做深度合併覆蓋，只寫要改的欄位：
 
 ```json
 {
   "paths": {
-    "obsidian_vault": "~/Documents/MyVault"
+    "obsidian_vault": "~/Documents/MyVault",
+    "zotero_db": "~/Zotero/zotero.sqlite"
   },
-  "ai_backend": {
-    "type": "openai_api"
-  }
+  "ai_backend": { "type": "openai_api" }
 }
 ```
 
-命令列參數優先級高於設定檔：`--backend` 等參數 > `user-config.local.json` > `user-config.json` > 內建預設值。
+| 設定段 | 內容 | 什麼時候要改 |
+|---|---|---|
+| `paths` | Obsidian vault、筆記目錄、Zotero 路徑 | 用歸檔工作流前必改 |
+| `daily_papers` | arXiv 每日論文關鍵詞過濾 | 客製化每日推送時 |
+| `automation` | 索引重新整理、git commit/push 開關 | 想自動提交筆記時 |
+| `ai_backend` | AI 後端類型及參數 | 改預設後端時（也可用 `--backend` 臨時切換） |
+| `daemon` | 批處理狀態目錄（預設 `~/.papersearch/`） | 一般不用改 |
 
-## 專案結構
+安全約定：API key 一律走環境變數（設定裡只寫變數名），永遠不進 JSON。
+
+## 🆚 跟其他工具啥不同
+
+| 工具 | 定位 | 差異 |
+| --- | --- | --- |
+| Zotero 本體 | 文獻管理 | 不做 AI 速覽/深讀，不產生知識庫筆記 |
+| arXiv 每日論文工具 | 新論文推薦 | 不能檢索既有會議論文，無深讀和歸檔 |
+| 通用 AI 對話讀 PDF | 臨時讀一篇 | 無本地語料、無匹配理由、無知識庫工作流 |
+| **papersearch** | **檢索 → 速覽 → 深讀 → 歸檔一站式** | **本地語料 + 誠實回退 + 知識庫自動化 + 多框架** |
+
+簡單說：**別的工具做其中一個環節，papersearch 把論文研究的全鏈路串起來，而且每一步都能脫離 agent 獨立跑。**
+
+## ❓ FAQ
+
+<details>
+<summary><b>我需要手動選 search / lookup / reader 嗎？</b></summary>
+
+不需要。在 agent 裡直接說目標，路由層自動分發，遵循「能輕不重」原則（能速覽就不深讀）。命令列場景按[上面的入口](#-怎麼用)呼叫即可。
+
+</details>
+
+<details>
+<summary><b>本地資料覆蓋哪些會議？能擴充嗎？</b></summary>
+
+AAAI / ACL / AI4X / EMNLP / ICCV / ICLR / ICML / IJCAI / KDD / NeurIPS / WWW，見 `search/journal/`。資料就是 JSON 檔案，往對應目錄放同格式 JSON 即可擴充。本地覆蓋弱時自動回退 arXiv 並明確告知。
+
+</details>
+
+<details>
+<summary><b>lookup 需要註冊 alphaXiv 帳號嗎？</b></summary>
+
+不需要，直接抓公開頁面。alphaXiv 不可用或被限流時自動回退 arXiv 摘要，輸出裡會標註實際來源和可信度。
+
+</details>
+
+<details>
+<summary><b>歸檔工作流會動我的 Zotero 資料庫嗎？</b></summary>
+
+唯讀查詢會先複製資料庫再操作，不會鎖庫。移動分類只在顯式歸檔流程（批處理 workflow 模式）中發生；Zotero 開著且本地 API 啟用時優先走 API（更安全），否則回退 SQLite；`--mode analysis` 不寫任何東西。
+
+</details>
+
+<details>
+<summary><b>批處理中斷了怎麼辦？會不會觸發 AI 用量限制？</b></summary>
+
+進度存在 `~/.papersearch/`，重跑同一指令自動續傳；`--no-resume` 從頭開始；`--status` 看進度和失敗原因。限速策略內建：rate limit 指數退避（60 秒起步、最長 6 小時），配額上限自動解析重置時間並等待，論文間預設間隔 5 秒，全程無需人工干預。
+
+</details>
+
+<details>
+<summary><b>配套的 Obsidian / Zotero 技能需要單獨安裝嗎？</b></summary>
+
+不需要，隨倉庫附帶。obsidian-markdown 在每次歸檔寫筆記時自動生效；obsidian-cli 僅在本機裝了 Obsidian CLI 時使用；zotero 技能僅在 Zotero 桌面版執行且開啟本地 API 時使用（否則回退內建 SQLite 方案）。
+
+</details>
+
+<details>
+<summary><b>支援 Windows 嗎？</b></summary>
+
+腳本基於 POSIX shell，推薦 macOS / Linux；Windows 請用 WSL。
+
+</details>
+
+## 📁 專案結構
 
 ```text
 papersearch/
 ├── SKILL.md                 # 頂層路由：把請求分發給對應子技能
 ├── scripts/run.sh           # 統一入口
-├── search/                  # 批量檢索（本地 journal/** 資料集 + arXiv 回退）
-│   ├── SKILL.md
-│   ├── paper_search.py
-│   └── journal/             # 11 個頂級會議的論文資料集
+├── search/                  # 批量檢索（本地 journal/** + arXiv 回退）
 ├── lookup/                  # 單篇速覽（alphaXiv 優先，arXiv 兜底）
-│   ├── SKILL.md
-│   └── scripts/alphaxiv_lookup.py
-├── reader/                  # 深度閱讀 + 歸檔工作流
-│   ├── SKILL.md
-│   ├── paper_daemon.py      # 批處理守護進程（斷點續傳、限速重試）
-│   ├── lib/ai_backend.py    # AI 後端抽象層
-│   └── assets/              # 筆記範本、Zotero 輔助腳本
-├── _shared/
-│   ├── user_config.py       # 設定載入
-│   └── user-config.json     # 預設設定
+├── reader/                  # 深讀 + 歸檔工作流（含批處理守護進程、AI backend 抽象層）
+├── _shared/                 # 設定載入、MOC 索引產生
+├── obsidian_skills/         # 配套 Obsidian 技能（markdown / cli / bases）
+├── zotero_skills/           # 配套 Zotero 技能（本地 API）
 └── examples/                # 搜尋輸出範例
 ```
 
-## 常見問題
-
-**我需要手動選 search / lookup / reader 嗎？**
-不需要。在 agent 裡直接說目標，路由層會自動分發；命令列場景按上面的入口呼叫即可。
-
-**search 的本地資料覆蓋哪些會議？**
-AAAI / ACL / AI4X / EMNLP / ICCV / ICLR / ICML / IJCAI / KDD / NeurIPS / WWW，見 `search/journal/`。CORL 會被識別為會議篩選條件，但無本地資料，會自動回退 arXiv API。本地覆蓋弱時也會自動回退並明確告知。
-
-**歸檔工作流需要什麼前置條件？**
-需要本機安裝 Zotero 和 Obsidian，並在 `_shared/user-config.local.json` 中設定好 vault 和 Zotero 資料庫路徑。search / lookup 不需要任何前置條件。
-
-**批處理中斷了怎麼辦？**
-進度儲存在狀態目錄（預設 `~/.papersearch/`），重新執行相同指令會自動斷點續傳；用 `--no-resume` 可強制從頭開始。
-
-## 環境需求
+## 🌱 環境需求與測試
 
 - Python 3.9+（純標準函式庫，無第三方依賴）
 - macOS / Linux
-- （可選）Zotero + Obsidian，僅歸檔工作流需要
-
-## 測試
+- （可選）Zotero + Obsidian，僅歸檔工作流需要；Zotero 開啟本地 API 可解鎖 BibTeX 匯出等能力
 
 ```bash
 python3 -m unittest search/tests/test_paper_search.py
 ```
+
+---
+
+<div align="center">
+
+**用過覺得有用？給個 ⭐ 是對作者最大的鼓勵。**
+
+[⬆ 回到頂部](#papersearch) · [📥 裝一個](#-30-秒裝上) · [🎬 怎麼用](#-怎麼用)
+
+</div>

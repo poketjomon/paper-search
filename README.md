@@ -1,66 +1,136 @@
+<div align="center">
+
 # papersearch
 
-🌐 **English** | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md)
+### Find papers, triage papers, deep-read papers, turn papers into your knowledge base — one suite for all four.
 
-> A paper-research skill suite for AI agents.
-> Works with Claude Code, Codex, Qoder — any agent framework that can read a `SKILL.md` and run shell commands — or standalone from the command line with no agent at all.
+A paper-research skill suite for AI agents: **local-first search across 11 top venues**, a **30-second brief** to judge whether a paper is worth reading, **structured deep reading**, and **one-click archival** into Obsidian notes with formulas, figures, and concept links.
 
-## What it does
+Works with Claude Code, Codex, Qoder — any agent framework that can read a `SKILL.md` and run shell commands — or standalone from the command line with no agent at all.
 
-| Subskill | Purpose | Example request |
-|---|---|---|
-| **search** | Find papers in bulk by topic / venue / year | “Find 2024 ICLR papers about diffusion policy, preferably with code” |
-| **lookup** | 30-second brief of one paper — is it worth reading? | “Quickly summarize arXiv 2303.04137” |
-| **reader** | Deep analysis of one paper | “Deeply analyze this paper's method and experiments” |
-| **archival workflow** | Obsidian notes + Zotero organization (explicit opt-in) | “Read this paper and archive it to my Obsidian vault” |
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square)
+![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
-Highlights:
+🌐 [简体中文](./README.zh-CN.md) · **English** · [繁體中文](./README.zh-TW.md)　|　[📥 Install in 30s](#-install-in-30-seconds) · [🎬 How to use](#-how-to-use) · [📊 What it looks like](#-what-it-looks-like) · [❓ FAQ](#-faq)
 
-- **Local-first search**: bundled datasets for 11 top venues (AAAI / ACL / AI4X / EMNLP / ICCV / ICLR / ICML / IJCAI / KDD / NeurIPS / WWW); CORL is also recognized as a venue filter and falls back to arXiv since it has no bundled data; weak local coverage is reported honestly
-- **Zero dependencies**: pure Python standard library, nothing to pip install
-- **Multi-framework**: the batch daemon supports Claude Code / Codex / OpenAI API backends, switchable via one CLI flag
+</div>
 
-## Installation
+---
+
+## ✨ What you get
+
+- **Find papers in bulk** — search by topic / venue / year / has-code, with ranked results and per-paper match reasons; weak local coverage is **reported honestly** with an arXiv fallback — no filler results ([full example](./examples/agent_rl_papers_en.md))
+- **30-second go / no-go verdict** — hand it an arXiv / alphaXiv link; sources and confidence levels are stated, gaps never invented
+- **Structured deep reading** — problem, method, experiments, limitations in one pass; default mode **never touches your files**
+- **Archive into your knowledge base** — Obsidian notes with formulas, figures, and `[[concept]]` links, plus automatic concept-library maintenance and Zotero organization (only on explicit request)
+- **Zero dependencies** — pure Python standard library; clone and run, nothing to pip install
+- **Multi-agent-framework** — the batch daemon supports Claude Code / Codex / OpenAI API, switchable with one `--backend` flag, no config edits
+- **Resumable batches** — rerun the same command after an interruption; finished papers are skipped automatically
+
+## 🎯 Who it's for
+
+| You are | What you can do with it |
+| --- | --- |
+| **A grad student writing related work** | One sentence retrieves years of top-venue papers in a direction, with match reasons and code links — no more crawling conference sites |
+| **A researcher keeping up with new papers** | Drop an arXiv link in, get a worth-reading verdict in 30 seconds, then decide whether to deep-read |
+| **A knowledge-base builder** | Batch-convert whole Zotero collections into Obsidian notes with formulas and figures, auto-building a linked concept library |
+| **A Zotero power user** | BibTeX export, full-text search, safe collection moves (via Zotero's local API) |
+| **A tool builder** | Every core feature is a CLI script — usable with no agent, embeddable in your own pipeline |
+
+## ⚡ Install in 30 seconds
 
 ### Option 1: Install into your agent framework (recommended)
 
-Point your agent's skills directory at this repo; the agent reads `SKILL.md` and handles routing automatically:
-
 ```bash
+git clone https://github.com/<your-name>/papersearch.git
+
 # Claude Code
-ln -s "$PWD" ~/.claude/skills/papersearch
+ln -s "$PWD/papersearch" ~/.claude/skills/papersearch
 
 # Codex
-ln -s "$PWD" ~/.codex/skills/papersearch
+ln -s "$PWD/papersearch" ~/.codex/skills/papersearch
 ```
 
-For other frameworks (Qoder, Cursor, …), follow their skill/plugin installation docs. The only requirement: the agent can read `SKILL.md` and execute `./scripts/run.sh`.
-
-Once installed, just ask in natural language:
-
-```text
-Find 2024 ICLR papers about diffusion policy, preferably with code and project links
-Is this paper worth reading: https://arxiv.org/abs/2303.04137
-Deeply analyze this paper's method, experiment design, and limitations
-```
+Other frameworks (Qoder / Cursor / custom agents): only two requirements — the agent can read the top-level `SKILL.md` (the routing contract) and execute `./scripts/run.sh`. Wire it up via your framework's skill installation mechanism.
 
 ### Option 2: Standalone CLI (zero install)
 
-Everything also works without any agent:
+All core features work without any agent:
 
 ```bash
 ./scripts/run.sh <search|lookup|reader> [args...]
 ```
 
-## Feature demos (real output)
-
-### 1) search: find a list of papers
+### Verify the installation
 
 ```bash
 ./scripts/run.sh search "find iclr papers about world model"
 ```
 
-Output (truncated):
+A paper table in the output means you're good.
+
+## 🎬 How to use
+
+Once installed, say any of these in your agent:
+
+- “Find 2024 ICLR papers about diffusion policy, preferably with code and project links”
+- “Create a related-work list for VLA from 2023-2025”
+- “Is this paper worth reading: https://arxiv.org/abs/2303.04137”
+- “Deeply analyze this paper's method, experiment design, and limitations”
+- “Read this paper and archive it to my Obsidian vault”
+- “Export the papers in my Zotero VLA collection to references.bib”
+- 「帮我找 2024 ICLR 上 diffusion policy 的论文，要有代码」
+- 「快速看一下这篇论文值不值得读：arXiv 2303.04137」
+
+You don't need to remember the three subskills — the router picks the lightest way to answer (brief before deep read, local before remote).
+
+<details>
+<summary><b>Subskill details (filter syntax / output formats / CLI flags)</b></summary>
+
+### search: bulk retrieval
+
+Write filters straight into natural language — no special syntax:
+
+| Filter | Examples |
+|---|---|
+| Venue | `ICLR`, `ICML`, `NeurIPS`, `AAAI`, `ACL`, `EMNLP`, `ICCV`, `IJCAI`, `KDD`, `WWW`, `CORL` |
+| Year | `2024` or a range like `2023-2025` |
+| Resources | `with code`, `with pdf` |
+
+Local data covers 11 top venues (see `search/journal/`); CORL has no bundled data and falls back to arXiv, labeled `Fallback: arXiv`. Results are also saved to `search/outputs/latest_search_results.md`.
+
+### lookup: one-paper brief
+
+Accepted inputs: `2303.04137`, `1706.03762v7`, arXiv URLs, alphaXiv URLs.
+
+```bash
+./scripts/run.sh lookup "2303.04137" --format brief          # English brief
+./scripts/run.sh lookup "2303.04137" --format brief-zh       # Chinese brief
+./scripts/run.sh lookup --input-file papers.txt --format brief   # batch (one ID per line)
+```
+
+Formats: `brief` / `brief-zh` / `markdown` / `text` / `json` / `json-compact`.
+
+### reader: deep reading & batch
+
+```bash
+./scripts/run.sh reader -c "VLA"        # batch-process a Zotero collection (recursive)
+./scripts/run.sh reader --status        # check progress
+./scripts/run.sh reader --list          # list Zotero collections
+```
+
+Default mode only analyzes; the archival workflow activates only when you explicitly mention **save / archive / Obsidian / Zotero / batch**.
+
+</details>
+
+## 📊 What it looks like
+
+### 1. search — find papers in bulk
+
+```bash
+./scripts/run.sh search "find iclr papers about world model"
+```
 
 ```text
 Found 5 papers for: world model
@@ -78,25 +148,13 @@ Local status: strong
 Saved markdown report: search/outputs/latest_search_results.md
 ```
 
-Filters you can write directly in natural language:
+How to read it: **Filters** shows what was parsed from your words (confirm it understood you); a weak **Local status** means results came from the arXiv fallback; **Why** lists each paper's match reasons so you can judge relevance.
 
-- Venue: `ICLR`, `ICML`, `NeurIPS`, `AAAI`, `ACL`, `EMNLP`, `ICCV`, `IJCAI`, `KDD`, `WWW`, `CORL` (CORL has no bundled data and automatically uses the arXiv fallback)
-- Year: `2024` or a range like `2023-2025`
-- Resources: `with code`, `with pdf`
-
-When local matches are weak it reports `Local status: weak` and falls back to the arXiv API instead of pretending generic matches are good enough.
-
-Full example: a two-year survey of Agent RL papers → [examples/agent_rl_papers_en.md](./examples/agent_rl_papers_en.md)
-
-### 2) lookup: one-paper brief
-
-Hand it an arXiv id or URL and get a go / no-go verdict in 30 seconds:
+### 2. lookup — 30-second brief
 
 ```bash
 ./scripts/run.sh lookup "2303.04137" --format brief
 ```
-
-Output (truncated):
 
 ```text
 Paper: Diffusion Policy: Visuomotor Policy Learning via Action Diffusion (2303.04137)
@@ -113,122 +171,182 @@ Worth reading? Abstract-first; this brief relies on the arXiv fallback.
 Source: arXiv abstract fallback. Confidence: basic (alphaXiv: http_error).
 ```
 
-Formats: `--format brief` | `brief-zh` (Chinese) | `markdown` | `text` | `json`
+The last two lines tell you where the information came from and how much to trust it — alphaXiv detailed reports > arXiv abstracts. The system never invents missing details.
 
-Accepted inputs: `2401.12345`, `https://arxiv.org/abs/2401.12345`, `https://www.alphaxiv.org/overview/2401.12345`
+### 3. Archival notes — papers become a knowledge base
 
-### 3) reader: deep reading
+<details>
+<summary><b>Expand to see what generated notes contain</b></summary>
+
+Generated from [`reader/assets/paper-note-template.md`](reader/assets/paper-note-template.md):
+
+- **YAML frontmatter**: title, method name, authors, year, venue, tags, Zotero collection
+- **Meta table**: affiliations, date, project page, baselines, links
+- **One-line summary** + **core contributions**
+- **Method breakdown**: per-module detail with inline `[[concept]]` links on every technical term
+- **Key formulas**: each with a "meaning + symbol glossary" section
+- **Key figures/tables**: `### Figure X: English title / 中文标题` + image source + explanation
+- **Experiments**: datasets, implementation details, qualitative results
+- **Critical thinking**: strengths, limitations, improvement directions, reproducibility checklist
+- **Related notes**: grouped by "built on / compared with / method-related / hardware-data"
+- **Quick-reference card**: an Obsidian callout summary
+
+The archival flow also: creates concept notes for new concepts, moves papers to sensible Zotero collections (based on understanding the paper, not keyword matching), and puts uncertain notes into `_待整理/`.
+
+</details>
+
+## 🔧 Switching AI backends
+
+Batch processing needs an AI backend per paper. Claude Code is the default; one `--backend` flag switches it — **no config edits**:
 
 ```bash
-./scripts/run.sh reader -c "VLA"                # batch-process a Zotero collection
-./scripts/run.sh reader --status                # check batch progress
-./scripts/run.sh reader --list                  # list all Zotero collections
+./scripts/run.sh reader -c "VLA" --backend claude    # default
+./scripts/run.sh reader -c "VLA" --backend codex     # Codex CLI
+./scripts/run.sh reader -c "VLA" --backend openai    # OpenAI API (needs OPENAI_API_KEY)
 ```
 
-Inside an agent, just say: “read this paper deeply” or “read this paper and generate an Obsidian note”.
-
-By default it only produces a structured analysis (problem, method, experiments, limitations). The archival workflow (writing notes, maintaining the concept library, moving Zotero collections) activates only when you explicitly mention **save / archive / Obsidian / Zotero / batch**.
-
-## Multi-agent-framework support
-
-Batch processing (`paper_daemon.py`) needs an AI backend to process each paper. Claude Code is the default, but you can switch with one `--backend` flag — **no config file edits needed**:
-
-```bash
-# Claude Code (default)
-./scripts/run.sh reader -c "VLA" --backend claude
-
-# OpenAI Codex CLI
-./scripts/run.sh reader -c "VLA" --backend codex
-
-# OpenAI API (requires the OPENAI_API_KEY environment variable)
-./scripts/run.sh reader -c "VLA" --backend openai
-
-# Any CLI tool (no preset needed)
-./scripts/run.sh reader -c "VLA" \
-    --cli-command aider --cli-args "--model,gpt-4o" --cli-input-mode stdin
-```
-
-| `--backend` | Tool | Actual invocation |
-|---|---|---|
-| `claude` | Claude Code CLI | `claude -p "prompt" --model opus ...` |
-| `codex` | Codex CLI | `codex exec --sandbox workspace-write "prompt"` |
-| `openai` | OpenAI-compatible API | HTTP POST `/chat/completions` |
-
-Override flags (`--cli-command`, `--cli-args`, `--api-model`, `--api-key-env`, `--api-base-url`, …) are documented in `./scripts/run.sh reader --help`.
-
-## Configuration
-
-All settings live in [`_shared/user-config.json`](_shared/user-config.json):
-
-| Section | Contents |
+| `--backend` | Actual invocation |
 |---|---|
-| `paths` | Obsidian vault, paper-notes folder, Zotero DB paths |
-| `daily_papers` | Keyword filters for daily arXiv ingestion |
-| `automation` | Auto-refresh indexes, git commit/push switches |
-| `ai_backend` | AI backend type and parameters (`claude_code` / `generic_cli` / `openai_api`) |
-| `daemon` | Batch state directory (progress, logs, lock file) |
+| `claude` | `claude -p "prompt" --model opus --permission-mode acceptEdits ...` |
+| `codex` | `codex exec --sandbox workspace-write "prompt"` |
+| `openai` | HTTP POST `{base_url}/chat/completions` |
 
-For personal overrides, create `_shared/user-config.local.json` (gitignored) instead of editing the tracked file:
+Fine-grained overrides available (`--cli-command` / `--cli-args` / `--api-model` / `--api-key-env` / `--api-base-url`), and you can plug in any CLI tool directly:
+
+```bash
+./scripts/run.sh reader -c "VLA" --cli-command aider --cli-args "--model,gpt-4o" --cli-input-mode stdin
+```
+
+Full reference: `./scripts/run.sh reader --help`. Precedence: CLI flags > `user-config.local.json` > `user-config.json` > built-in defaults.
+
+## 🗂️ Companion skills (ship with the repo, no separate install)
+
+| Skill | Purpose | When it's used |
+|---|---|---|
+| `obsidian_skills/obsidian-markdown` | Obsidian syntax rules (wikilinks / callouts / embeds / frontmatter) | Automatically followed whenever vault notes are written |
+| `obsidian_skills/obsidian-cli` | Vault search / operations via CLI | Concept deduplication, vault search (needs Obsidian CLI installed) |
+| `obsidian_skills/obsidian-bases` | `.base` database views | When you want a filterable view over your paper library |
+| `zotero_skills/zotero` | Zotero local API: safe collection moves, BibTeX export, full-text search | When Zotero Desktop runs with the local API enabled |
+
+Division of labor: batch read-only queries with Zotero closed use the built-in SQLite approach (`reader/assets/zotero_helper.py`); write operations and API-only features (BibTeX / full-text search) use the local API.
+
+## ⚙️ Configuration
+
+All settings live in [`_shared/user-config.json`](_shared/user-config.json). For personal overrides, create `_shared/user-config.local.json` (gitignored) — it deep-merges, so write only what you change:
 
 ```json
 {
   "paths": {
-    "obsidian_vault": "~/Documents/MyVault"
+    "obsidian_vault": "~/Documents/MyVault",
+    "zotero_db": "~/Zotero/zotero.sqlite"
   },
-  "ai_backend": {
-    "type": "openai_api"
-  }
+  "ai_backend": { "type": "openai_api" }
 }
 ```
 
-Precedence: CLI flags > `user-config.local.json` > `user-config.json` > built-in defaults.
+| Section | Contents | When to change |
+|---|---|---|
+| `paths` | Obsidian vault, notes folders, Zotero paths | Always, before the archival workflow |
+| `daily_papers` | Keyword filters for daily arXiv ingestion | Customizing daily feeds |
+| `automation` | Index refresh, git commit/push switches | Auto-committing note changes |
+| `ai_backend` | AI backend type and parameters | Changing the default backend (or use `--backend` ad hoc) |
+| `daemon` | Batch state directory (default `~/.papersearch/`) | Rarely |
 
-## Project structure
+Security: API keys always go through environment variables (config stores only the variable name), never into JSON.
+
+## 🆚 How it differs from other tools
+
+| Tool | Positioning | Difference |
+| --- | --- | --- |
+| Zotero itself | Reference management | No AI triage/deep reading, no knowledge-base notes |
+| arXiv daily-paper tools | New-paper recommendations | Can't search existing venue corpora, no deep reading or archival |
+| General AI chat + PDF | Ad-hoc paper reading | No local corpus, no match reasons, no knowledge-base workflow |
+| **papersearch** | **Search → triage → deep read → archive, end to end** | **Local corpus + honest fallback + knowledge-base automation + multi-framework** |
+
+In one line: **other tools cover one step; papersearch chains the entire paper-research pipeline — and every step also runs standalone without an agent.**
+
+## ❓ FAQ
+
+<details>
+<summary><b>Do I have to pick search / lookup / reader manually?</b></summary>
+
+No. State your goal and the router dispatches automatically, preferring the lightest option (brief before deep read). From the CLI, use the entrypoints above.
+
+</details>
+
+<details>
+<summary><b>Which venues does the local corpus cover? Can I extend it?</b></summary>
+
+AAAI / ACL / AI4X / EMNLP / ICCV / ICLR / ICML / IJCAI / KDD / NeurIPS / WWW — see `search/journal/`. Data lives as JSON files; drop additional same-format JSON into the right directory to extend. Weak local coverage always triggers the arXiv fallback and is reported explicitly.
+
+</details>
+
+<details>
+<summary><b>Does lookup need an alphaXiv account?</b></summary>
+
+No, it fetches public pages. When alphaXiv is unavailable or rate-limited it falls back to the arXiv abstract, stating the actual source and confidence.
+
+</details>
+
+<details>
+<summary><b>Does the archival workflow modify my Zotero database?</b></summary>
+
+Read-only queries copy the database first, so nothing gets locked. Collection moves only happen in the explicit archival flow (batch `workflow` mode); when Zotero is running with the local API enabled the API is preferred (safer), otherwise it falls back to SQLite; `--mode analysis` writes nothing.
+
+</details>
+
+<details>
+<summary><b>What if a batch gets interrupted? Will it trip AI usage limits?</b></summary>
+
+Progress lives in `~/.papersearch/`; rerunning the same command resumes automatically. `--no-resume` starts over; `--status` shows progress and failures. Rate-limit handling is built in: exponential backoff (60 s up to 6 h), quota-reset parsing that waits until the stated reset time, and a 5-second pause between papers — no intervention needed.
+
+</details>
+
+<details>
+<summary><b>Do the companion Obsidian / Zotero skills need a separate install?</b></summary>
+
+No, they ship with the repo. obsidian-markdown applies automatically whenever vault notes are written; obsidian-cli is only used if you have the Obsidian CLI installed; the zotero skill is only used when Zotero Desktop runs with the local API enabled (otherwise it falls back to the built-in SQLite approach).
+
+</details>
+
+<details>
+<summary><b>Does it work on Windows?</b></summary>
+
+Scripts are POSIX-shell based; macOS / Linux are recommended. On Windows, use WSL.
+
+</details>
+
+## 📁 Project structure
 
 ```text
 papersearch/
 ├── SKILL.md                 # Top-level router: dispatches requests to subskills
 ├── scripts/run.sh           # Unified entrypoint
-├── search/                  # Bulk search (local journal/** corpus + arXiv fallback)
-│   ├── SKILL.md
-│   ├── paper_search.py
-│   └── journal/             # Paper datasets for 11 top venues
+├── search/                  # Bulk search (local journal/** + arXiv fallback)
 ├── lookup/                  # One-paper brief (alphaXiv first, arXiv fallback)
-│   ├── SKILL.md
-│   └── scripts/alphaxiv_lookup.py
-├── reader/                  # Deep reading + archival workflow
-│   ├── SKILL.md
-│   ├── paper_daemon.py      # Batch daemon (resume, rate-limit backoff)
-│   ├── lib/ai_backend.py    # AI backend abstraction layer
-│   └── assets/              # Note template, Zotero helper scripts
-├── _shared/
-│   ├── user_config.py       # Config loading
-│   └── user-config.json     # Default configuration
+├── reader/                  # Deep reading + archival workflow (batch daemon, AI backend abstraction)
+├── _shared/                 # Config loading, MOC index generators
+├── obsidian_skills/         # Companion Obsidian skills (markdown / cli / bases)
+├── zotero_skills/           # Companion Zotero skill (local API)
 └── examples/                # Sample search outputs
 ```
 
-## FAQ
-
-**Do I have to pick search / lookup / reader manually?**
-No. In an agent, just state your goal and the router dispatches automatically; from the CLI, use the entrypoints above.
-
-**Which venues does the local search corpus cover?**
-AAAI / ACL / AI4X / EMNLP / ICCV / ICLR / ICML / IJCAI / KDD / NeurIPS / WWW — see `search/journal/`. CORL is recognized as a venue filter but has no bundled data, so it falls back to the arXiv API. Weak local coverage also triggers the fallback and is reported explicitly.
-
-**What do I need for the archival workflow?**
-Local Zotero and Obsidian installs, plus vault/Zotero paths configured in `_shared/user-config.local.json`. search and lookup need no prerequisites.
-
-**What if a batch run gets interrupted?**
-Progress is saved in the state directory (default `~/.papersearch/`); rerunning the same command resumes automatically. Use `--no-resume` to start over.
-
-## Requirements
+## 🌱 Requirements & tests
 
 - Python 3.9+ (standard library only, no third-party dependencies)
 - macOS / Linux
-- (Optional) Zotero + Obsidian, only for the archival workflow
-
-## Tests
+- (Optional) Zotero + Obsidian, only for the archival workflow; enabling Zotero's local API unlocks BibTeX export and more
 
 ```bash
 python3 -m unittest search/tests/test_paper_search.py
 ```
+
+---
+
+<div align="center">
+
+**Find it useful? A ⭐ is the best encouragement.**
+
+[⬆ Back to top](#papersearch) · [📥 Install](#-install-in-30-seconds) · [🎬 How to use](#-how-to-use)
+
+</div>

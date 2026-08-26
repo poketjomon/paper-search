@@ -53,3 +53,21 @@ If the request is ambiguous, choose the lightest subskill that still answers it:
 - search before lookup
 - lookup before reader
 
+## Companion Obsidian skills (`obsidian_skills/`)
+
+These auxiliary skills support `reader/` advanced workflow mode (Obsidian vault operations). Load them only when the task actually writes to or queries the vault:
+
+- `obsidian_skills/obsidian-markdown/` — Obsidian Flavored Markdown syntax (wikilinks, embeds, callouts, frontmatter properties). Always follow it when generating vault-ready paper notes or concept notes.
+- `obsidian_skills/obsidian-cli/` — vault operations via Obsidian CLI (search notes, create notes, manage properties). Use it to check whether a concept note already exists or to search vault content efficiently.
+- `obsidian_skills/obsidian-bases/` — `.base` database views. Use it when the user wants a filterable table/card view over their paper-note library.
+
+These skills only govern Obsidian syntax and vault operations. Paper retrieval, lookup, and analysis stay with the `search/`, `lookup/`, and `reader/` subskills.
+
+## Companion Zotero skill (`zotero_skills/`)
+
+- `zotero_skills/zotero/` — operates the local Zotero Desktop library through its local HTTP API (localhost:23119): search, list collections, move items between collections, and export BibTeX.
+
+Division of labor with the built-in `reader/assets/zotero_helper.py` (SQLite-based):
+- Read-only batch queries that must work while Zotero is closed → `reader/assets/zotero_helper.py`
+- Write operations (moving collections), BibTeX export, full-text search → `zotero_skills/zotero/` (requires Zotero Desktop running with the local API enabled)
+
