@@ -12,7 +12,7 @@
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
-🌐 **简体中文** · [English](./README.md) · [繁體中文](./README.zh-TW.md)　|　[🎬 怎么用](#-怎么用) · [📊 它长什么样](#-它长什么样) · [📚 知识库归档](#-构建你的论文知识库zotero--obsidian) · [❓ FAQ](#-faq)
+🌐 **简体中文** · [English](./README.md) · [繁體中文](./README.zh-TW.md)　|　[📥 安装](#-安装) · [🎬 怎么用](#-怎么用) · [📊 它长什么样](#-它长什么样) · [📚 知识库归档](#-构建你的论文知识库zotero--obsidian) · [❓ FAQ](#-faq)
 
 </div>
 
@@ -38,11 +38,25 @@
 | **Zotero 重度用户** | BibTeX 导出、全文搜索、安全移动分类（走 Zotero 本地 API） |
 | **工具开发者** | 核心功能全是命令行脚本，不装 agent 也能用，可直接接进自己的 pipeline |
 
+## 📥 安装
+
+skill 的“安装”就是让 agent 框架发现它的 `SKILL.md`——一条软链接搞定：
+
+```bash
+# Claude Code
+ln -s /path/to/papersearch ~/.claude/skills/papersearch
+
+# Codex CLI
+ln -s /path/to/papersearch ~/.codex/skills/papersearch
+```
+
+只在某个项目里用的话，放进该项目的 `.claude/skills/` 即可。其他框架（Qoder / Cursor / 自建 agent）：能读到顶层 `SKILL.md` 并执行 `./scripts/run.sh` 就行。
+
+装好新开一个会话，说一句「找 ICLR 上 world model 的论文」，agent 输出论文列表就说明生效了。
+
 ## 🎬 怎么用
 
-把本仓库作为 skill 装进你的 agent 框架（Claude Code / Codex / Qoder 等，按各自框架的方式加载即可），或者不装任何 agent 直接跑命令行：`./scripts/run.sh <search|lookup|reader> [args...]`。
-
-然后在 agent 对话里说出以下任一句即可触发：
+装好后，在 agent 对话里说出以下任一句即可触发：
 
 - 「帮我找 2024 ICLR 上 diffusion policy 的论文，最好有代码和项目链接」
 - 「给我整理一份 2023-2025 年 VLA 方向的 related work 列表」

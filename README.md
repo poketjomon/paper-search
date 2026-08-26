@@ -12,7 +12,7 @@ Works with Claude Code, Codex, Qoder — any agent framework that can read a `SK
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
-🌐 [简体中文](./README.zh-CN.md) · **English** · [繁體中文](./README.zh-TW.md)　|　[🎬 How to use](#-how-to-use) · [📊 What it looks like](#-what-it-looks-like) · [📚 Knowledge-base archival](#-build-your-paper-knowledge-base-zotero--obsidian) · [❓ FAQ](#-faq)
+🌐 [简体中文](./README.zh-CN.md) · **English** · [繁體中文](./README.zh-TW.md)　|　[📥 Install](#-install) · [🎬 How to use](#-how-to-use) · [📊 What it looks like](#-what-it-looks-like) · [📚 Knowledge-base archival](#-build-your-paper-knowledge-base-zotero--obsidian) · [❓ FAQ](#-faq)
 
 </div>
 
@@ -38,11 +38,25 @@ Works with Claude Code, Codex, Qoder — any agent framework that can read a `SK
 | **A Zotero power user** | BibTeX export, full-text search, safe collection moves (via Zotero's local API) |
 | **A tool builder** | Every core feature is a CLI script — usable with no agent, embeddable in your own pipeline |
 
+## 📥 Install
+
+“Installing” a skill just means letting your agent framework discover its `SKILL.md` — one symlink does it:
+
+```bash
+# Claude Code
+ln -s /path/to/papersearch ~/.claude/skills/papersearch
+
+# Codex CLI
+ln -s /path/to/papersearch ~/.codex/skills/papersearch
+```
+
+To scope it to one project, put it in that project's `.claude/skills/` instead. Other frameworks (Qoder / Cursor / custom agents): anything that can read the top-level `SKILL.md` and execute `./scripts/run.sh` works.
+
+Verify by starting a new session and saying “Find ICLR papers about world model” — a paper list in the response means it's live.
+
 ## 🎬 How to use
 
-Load this repo as a skill in your agent framework (Claude Code / Codex / Qoder etc., via each framework's own mechanism), or skip agents entirely and run the CLI: `./scripts/run.sh <search|lookup|reader> [args...]`.
-
-Then say any of these in your agent:
+Once installed, say any of these in your agent:
 
 - “Find 2024 ICLR papers about diffusion policy, preferably with code and project links”
 - “Create a related-work list for VLA from 2023-2025”
