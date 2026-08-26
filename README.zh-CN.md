@@ -252,13 +252,13 @@ Saved markdown report: search/outputs/latest_search_results.md
 
 ### 批量处理：把 Zotero 整个分类变成笔记
 
-```bash
-./scripts/run.sh reader --list       # 看 Zotero 里有哪些分类
-./scripts/run.sh reader -c "VLA"     # 批量处理（递归包含子分类）
-./scripts/run.sh reader --status     # 另开终端看进度
-```
+在 agent 里说：
 
-`--list` 真实输出：
+- 「把我 Zotero 里的 VLA 分类批量处理成论文笔记」
+- 「我的 Zotero 里有哪些分类？」
+- 「批处理进度怎么样了？」
+
+agent 会自动完成：递归处理子分类、跳过已有笔记的论文、中断后重跑自动续传。问它分类情况时会如实报告，比如：
 
 ```text
 === Zotero 分类 ===
@@ -269,7 +269,18 @@ Saved markdown report: search/outputs/latest_search_results.md
   agent: 1 篇
 ```
 
-智能行为：已有笔记的论文自动跳过；没有本地 PDF 的自动改用在线来源；中断后重跑同一命令自动续传；遇到 rate limit 自动退避等待，全程无需人工干预。
+<details>
+<summary>命令行等价方式（不装 agent 时）</summary>
+
+```bash
+./scripts/run.sh reader --list       # 看 Zotero 里有哪些分类
+./scripts/run.sh reader -c "VLA"     # 批量处理（递归包含子分类）
+./scripts/run.sh reader --status     # 另开终端看进度
+```
+
+</details>
+
+其他智能行为：没有本地 PDF 的论文自动改用在线来源；遇到 rate limit 自动退避等待，全程无需人工干预。
 
 ### 最终你的知识库里会多出什么
 

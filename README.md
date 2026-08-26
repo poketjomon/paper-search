@@ -252,13 +252,13 @@ Generated notes follow [`reader/assets/paper-note-template.md`](reader/assets/pa
 
 ### Batch processing: a whole Zotero collection into notes
 
-```bash
-./scripts/run.sh reader --list       # see your Zotero collections
-./scripts/run.sh reader -c "VLA"     # batch-process (recursively includes subcollections)
-./scripts/run.sh reader --status     # check progress from another terminal
-```
+Say in your agent:
 
-Real `--list` output:
+- “Batch-process the VLA collection in my Zotero into paper notes”
+- “What collections do I have in Zotero?”
+- “How is the batch processing going?”
+
+The agent handles the rest: recursing into subcollections, skipping papers with existing notes, and resuming automatically after interruptions. Ask about your collections and it reports honestly, e.g.:
 
 ```text
 === Zotero 分类 ===
@@ -269,7 +269,18 @@ Real `--list` output:
   agent: 1 篇
 ```
 
-Smart behavior: papers with existing notes are skipped automatically; papers without a local PDF fall back to online sources; rerunning after an interruption resumes automatically; rate limits trigger automatic backoff — no intervention needed.
+<details>
+<summary>CLI equivalents (when running without an agent)</summary>
+
+```bash
+./scripts/run.sh reader --list       # see your Zotero collections
+./scripts/run.sh reader -c "VLA"     # batch-process (recursively includes subcollections)
+./scripts/run.sh reader --status     # check progress from another terminal
+```
+
+</details>
+
+Other smart behavior: papers without a local PDF fall back to online sources; rate limits trigger automatic backoff — no intervention needed.
 
 ### What ends up in your knowledge base
 

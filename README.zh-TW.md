@@ -252,13 +252,13 @@ Saved markdown report: search/outputs/latest_search_results.md
 
 ### 批量處理：把 Zotero 整個分類變成筆記
 
-```bash
-./scripts/run.sh reader --list       # 看 Zotero 裡有哪些分類
-./scripts/run.sh reader -c "VLA"     # 批量處理（遞迴包含子分類）
-./scripts/run.sh reader --status     # 另開終端看進度
-```
+在 agent 裡說：
 
-`--list` 真實輸出：
+- 「把我 Zotero 裡的 VLA 分類批量處理成論文筆記」
+- 「我的 Zotero 裡有哪些分類？」
+- 「批處理進度怎麼樣了？」
+
+agent 會自動完成：遞迴處理子分類、跳過已有筆記的論文、中斷後重跑自動續傳。問它分表情況時會如實報告，比如：
 
 ```text
 === Zotero 分類 ===
@@ -269,7 +269,18 @@ Saved markdown report: search/outputs/latest_search_results.md
   agent: 1 篇
 ```
 
-智慧行為：已有筆記的論文自動跳過；沒有本地 PDF 的自動改用線上來源；中斷後重跑同一指令自動續傳；遇到 rate limit 自動退避等待，全程無需人工干預。
+<details>
+<summary>命令列等價方式（不裝 agent 時）</summary>
+
+```bash
+./scripts/run.sh reader --list       # 看 Zotero 裡有哪些分類
+./scripts/run.sh reader -c "VLA"     # 批量處理（遞迴包含子分類）
+./scripts/run.sh reader --status     # 另開終端看進度
+```
+
+</details>
+
+其他智慧行為：沒有本地 PDF 的論文自動改用線上來源；遇到 rate limit 自動退避等待，全程無需人工干預。
 
 ### 最終你的知識庫裡會多出什麼
 
