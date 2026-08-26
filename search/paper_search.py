@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import re
 import sys
@@ -8,7 +10,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Callable
 
-KNOWN_VENUES = ["AAAI", "ACL", "AI4X", "EMNLP", "ICCV", "ICLR", "ICML", "IJCAI", "KDD", "NIPS", "WWW"]
+KNOWN_VENUES = ["AAAI", "ACL", "AI4X", "CORL", "EMNLP", "ICCV", "ICLR", "ICML", "IJCAI", "KDD", "NIPS", "WWW"]
+VENUE_ALIASES = {"neurips": "NIPS"}
 DEFAULT_LIMIT = 5
 PATH_PATTERN = re.compile(r"journal/([^/]+)/\1(\d{4})\.json$", re.IGNORECASE)
 URL_PATTERN = re.compile(r"https?://\S+", re.IGNORECASE)
@@ -96,6 +99,8 @@ def parse_paper_search_query(raw_query: str) -> dict[str, Any]:
             working = normalize_whitespace(working.replace(exact_year_match.group(0), " "))
 
     venues: list[str] = []
+    for alias, canonical in VENUE_ALIASES.items():
+        working = re.sub(rf"\b{re.escape(alias)}\b", canonical, working, flags=re.IGNORECASE)
     for venue in KNOWN_VENUES:
         if re.search(rf"\b{re.escape(venue)}\b", working, re.IGNORECASE):
             venues.append(venue)

@@ -17,3 +17,4 @@ develop-eggs
 .installed.cfg
 *.egg-info
 .qoder
+_shared/user-config.local.json

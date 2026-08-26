@@ -15,6 +15,8 @@ Backend selection is driven by ``_shared/user-config.json`` under the
 override file without touching the tracked default.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import re

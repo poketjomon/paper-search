@@ -4,6 +4,8 @@ Zotero 数据库查询辅助脚本
 用于 paper-reader skill 的 Zotero 集成
 """
 
+from __future__ import annotations
+
 import sqlite3
 import os
 import shutil

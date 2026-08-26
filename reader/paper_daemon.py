@@ -20,6 +20,8 @@ AI backend 在 _shared/user-config.json 的 "ai_backend" 段配置，
 支持 claude_code / generic_cli / openai_api 三种类型。
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import json

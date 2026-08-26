@@ -1,17 +1,13 @@
-Found 5 papers for: 找 llm benchmark
+Found 5 papers for: world model
 
-Filters: none
+Filters: venue=NIPS; year=2024
 
-Local status: weak
-
-Fallback: arXiv
-
-Warnings: Local coverage appears weak for this query; showing arXiv fallback results.
+Local status: strong
 
 | Year | Venue | Title | Abstract | Link | Why |
 | --- | --- | --- | --- | --- | --- |
-| 2025 | ARXIV | Generation-Time vs. Post-hoc Citation: A Holistic Evaluation of LLM Attribution | Trustworthy Large Language Models (LLMs) must cite human-verifiable sources in high-stakes domains such as healthcare, law, academia, and finance, where even small errors can ha... | [link](http://arxiv.org/abs/2509.21557v2) | remote fallback match |
-| 2024 | ARXIV | Systematic Evaluation of LLM-as-a-Judge in LLM Alignment Tasks: Explainable Metrics and Diverse Prompt Templates | LLM-as-a-Judge has been widely applied to evaluate and compare different LLM alignmnet approaches (e.g., RLHF and DPO). However, concerns regarding its reliability have emerged,... | [link](http://arxiv.org/abs/2408.13006v2) | remote fallback match |
-| 2024 | ARXIV | The Challenges of Evaluating LLM Applications: An Analysis of Automated, Human, and LLM-Based Approaches | Chatbots have been an interesting application of natural language generation since its inception. With novel transformer based Generative AI methods, building chatbots have beco... | [link](http://arxiv.org/abs/2406.03339v2) | remote fallback match |
-| 2023 | ARXIV | FFT: Towards Harmlessness Evaluation and Analysis for LLMs with Factuality, Fairness, Toxicity | The widespread of generative artificial intelligence has heightened concerns about the potential harms posed by AI-generated texts, primarily stemming from factoid, unfair, and ... | [link](http://arxiv.org/abs/2311.18580v2) | remote fallback match |
-| 2023 | ARXIV | PPTC Benchmark: Evaluating Large Language Models for PowerPoint Task Completion | Recent evaluations of Large Language Models (LLMs) have centered around testing their zero-shot/few-shot capabilities for basic natural language tasks and their ability to trans... | [link](http://arxiv.org/abs/2311.01767v2) | remote fallback match |
+| 2024 | NIPS | Grounded Answers for Multi-agent Decision-making Problem through Generative World Model | Recent progress in generative models has stimulated significant innovations in many fields, such as image generation and chatbots. Despite their success, these models often prod... | [link](https://neurips.cc/virtual/2024/poster/95231) | venue match, year match, title match, keyword match, abstract match, primary area match |
+| 2024 | NIPS | iVideoGPT: Interactive VideoGPTs are Scalable World Models | World models empower model-based agents to interactively explore, reason, and plan within imagined environments for real-world decision-making. However, the high demand for inte... | [link](https://neurips.cc/virtual/2024/poster/96668) | venue match, year match, title match, keyword match, abstract match |
+| 2024 | NIPS | Simplifying Latent Dynamics with Softly State-Invariant World Models | To solve control problems via model-based reasoning or planning, an agent needs to know how its actions affect the state of the world. The actions an agent has at its disposal o... | [link](https://neurips.cc/virtual/2024/poster/96114) | venue match, year match, title match, keyword match, abstract match |
+| 2024 | NIPS | Diffusion for World Modeling: Visual Details Matter in Atari | World models constitute a promising approach for training reinforcement learning agents in a safe and sample-efficient manner. Recent world models predominantly operate on seque... | [link](https://neurips.cc/virtual/2024/poster/95428) | venue match, year match, title match, keyword match, abstract match |
+| 2024 | NIPS | Leveraging Separated World Model for Exploration in Visually Distracted Environments | Model-based unsupervised reinforcement learning (URL) has gained prominence for reducing environment interactions and learning general skills using intrinsic rewards. However, d... | [link](https://neurips.cc/virtual/2024/poster/95344) | venue match, year match, title match, keyword match, abstract match |
