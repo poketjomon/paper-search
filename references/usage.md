@@ -13,7 +13,7 @@ Run from inside this suite:
 ## Routing
 
 - use `search/` for local bundled `journal/**` retrieval, paper lists, topic search, venue/year filtering, and sparse-domain discovery
-- `search/` is local-first: it should extract query fields dynamically, try a small bundle of related local searches, report weak local coverage honestly, and then use arXiv fallback when needed
+- `search/` is a three-layer hybrid: (1) scripted local corpus + live arXiv merge, (2) agent-native web search over GitHub awesome lists, blogs, and project pages for exhaustive/survey tasks, reusing the concept bundle from `--concepts`, (3) cross-layer dedup with per-paper source tags
 - the same extracted bundle should also drive multiple remote fallback queries instead of sending one raw sentence remotely
 - use `lookup/` for one-paper arXiv / alphaXiv briefs
 - use `reader/` for deeper one-paper analysis and explicit advanced workflow mode

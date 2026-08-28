@@ -8,6 +8,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from paper_search import (
     classify_local_result,
     default_arxiv_fallback_search,
+    extract_query_concepts,
     format_paper_search_results,
     parse_paper_search_query,
     run_paper_search,
@@ -563,6 +564,63 @@ class ArxivFallbackBehaviorTest(unittest.TestCase):
         self.assertIn("Local status: weak", output)
         self.assertIn("Fallback: arXiv", output)
         self.assertIn("Warnings: Local coverage appears weak for this query; showing arXiv fallback results.", output)
+
+
+class RemoteNoiseFilteringTest(unittest.TestCase):
+    @staticmethod
+    def build_remote_candidate(paper_id, title, abstract, keywords=None):
+        return {
+            "paper": {
+                "id": paper_id,
+                "title": title,
+                "abstract": abstract,
+                "venue": "ARXIV",
+                "year": 2025,
+                "paperUrl": f"https://arxiv.org/abs/2501.{abs(hash(paper_id)) % 100000}",
+                "pdfUrl": None,
+                "codeUrl": None,
+                "projectUrl": None,
+                "source": "arxiv-fallback",
+                "keywords": keywords or [],
+                "primaryArea": None,
+                "hasPdf": False,
+                "hasCode": False,
+                "hasProject": False,
+                "raw": {},
+            },
+            "score": 1,
+            "whyMatched": ["remote fallback match"],
+        }
+
+    def test_year_tokens_are_not_treated_as_domain_concepts(self):
+        concepts = extract_query_concepts("long-horizon llm agent benchmark evaluation 2025")
+        self.assertFalse(any(concept["label"] == "2025" for concept in concepts))
+
+    def test_remote_candidate_matching_only_generic_concepts_is_dropped(self):
+        def fake_fallback(query, limit):
+            return [
+                RemoteNoiseFilteringTest.build_remote_candidate(
+                    "arxiv-generic-noise",
+                    "Overview of Shared Tasks: LLMs as Teachers, Students and Evaluators",
+                    "Shared tasks that test generative language systems with LLMs.",
+                ),
+                RemoteNoiseFilteringTest.build_remote_candidate(
+                    "arxiv-domain-relevant",
+                    "SeisBench-LLM: Benchmarking LLMs for Seismology",
+                    "A benchmark for large language models on seismology tasks.",
+                    keywords=["seismology", "benchmark"],
+                ),
+            ]
+
+        response = run_paper_search(
+            "seismology large language model benchmark evaluation",
+            papers=[],
+            fallback_search=fake_fallback,
+        )
+
+        result_ids = [result["paper"]["id"] for result in response["results"]]
+        self.assertNotIn("arxiv-generic-noise", result_ids)
+        self.assertIn("arxiv-domain-relevant", result_ids)
 
 
 if __name__ == "__main__":

@@ -315,7 +315,7 @@ def extract_query_concepts(query: str) -> list[dict[str, Any]]:
         working = normalize_whitespace(working)
 
     for token in tokenize(working):
-        if token in GENERIC_QUERY_TERMS or token in STOPWORDS:
+        if token in GENERIC_QUERY_TERMS or token in STOPWORDS or re.fullmatch(r"\d{4}", token):
             continue
         concepts.append({
             "label": token,
@@ -591,6 +591,8 @@ def score_remote_result(result: dict[str, Any], concepts: list[dict[str, Any]]) 
             break
 
     base_score = result.get("score", 0)
+    if non_generic_labels and non_generic_matches == 0:
+        return 0
     return base_score + concept_matches * 10 + non_generic_matches * 20 + llm_alias_match * 7 + compact_semantic_query_match * 15
 
 
@@ -613,16 +615,44 @@ def run_remote_fallback_search(
 
     ranked = []
     for merged in combined.values():
+        relevance = score_remote_result(merged, concepts)
+        if relevance <= 0:
+            continue
         ranked.append(
             {
                 "paper": merged["paper"],
-                "score": score_remote_result(merged, concepts) + len(merged["matchedQueries"]) * BUNDLE_SCORE_BONUS,
+                "score": relevance + len(merged["matchedQueries"]) * BUNDLE_SCORE_BONUS,
                 "whyMatched": merged["whyMatched"] + ([f"matched {len(merged['matchedQueries'])} query bundles"] if len(merged["matchedQueries"]) > 1 else []),
             }
         )
 
     sorter = lambda result: (-result["score"], -result["paper"].get("year", 0), result["paper"].get("venue") == "ARXIV")
     return sorted(ranked, key=sorter)[:limit]
+
+
+def normalize_title_for_merge(title: str) -> str:
+    cleaned = "".join(character if character.isalnum() else " " for character in title.lower())
+    return " ".join(cleaned.split())
+
+
+def merge_remote_into_local(
+    primary_results: list[dict[str, Any]],
+    secondary_results: list[dict[str, Any]],
+    limit: int,
+) -> list[dict[str, Any]]:
+    seen_titles = {
+        normalize_title_for_merge(result["paper"].get("title") or "")
+        for result in primary_results
+        if result["paper"].get("title")
+    }
+    merged = list(primary_results)
+    for result in secondary_results:
+        key = normalize_title_for_merge(result["paper"].get("title") or "")
+        if not key or key in seen_titles:
+            continue
+        seen_titles.add(key)
+        merged.append(result)
+    return merged[: 2 * limit]
 
 
 def default_arxiv_fallback_search(query: str, limit: int) -> list[dict[str, Any]]:
@@ -709,18 +739,25 @@ def run_paper_search(
     strong_results = local_results["strong"]
     weak_results = local_results["weak"]
     warnings = list(applied_filters["warnings"])
-    fallback_used = False
     local_status = "strong" if strong_results else "weak"
-    final_results = strong_results[:limit] if strong_results else weak_results[:limit]
+    local_final = strong_results[:limit] if strong_results else weak_results[:limit]
 
-    if not strong_results and fallback_search and applied_filters["query"]:
-        fallback_results = run_remote_fallback_search(raw_query, limit, fallback_search)
-        if fallback_results:
-            fallback_used = True
-            warnings.append("Local coverage appears weak for this query; showing arXiv fallback results.")
-            final_results = fallback_results
+    remote_results: list[dict[str, Any]] = []
+    if fallback_search and applied_filters["query"]:
+        remote_results = run_remote_fallback_search(raw_query, limit, fallback_search)
+
+    if remote_results:
+        fallback_used = True
+        if strong_results:
+            final_results = merge_remote_into_local(local_final, remote_results, limit)
         else:
-            warnings.append("Local coverage is weak and remote fallback returned no results (possibly rate-limited).")
+            warnings.append("Local coverage appears weak for this query; arXiv results shown first.")
+            final_results = merge_remote_into_local(remote_results, local_final, limit)
+    else:
+        fallback_used = False
+        final_results = local_final
+        if not strong_results and fallback_search and applied_filters["query"]:
+            warnings.append("Local coverage is weak and remote fallback returned no results (possibly rate-limited or no relevant matches).")
 
     return {
         "appliedFilters": applied_filters,
@@ -728,7 +765,7 @@ def run_paper_search(
         "results": final_results,
         "strongLocalResults": strong_results[:limit],
         "weakLocalResults": weak_results[:limit],
-        "truncated": (len(strong_results) if strong_results else len(weak_results)) > limit,
+        "truncated": len(local_final) + len(remote_results) > len(final_results),
         "warnings": warnings,
         "localStatus": local_status,
         "fallbackUsed": fallback_used,
@@ -806,6 +843,7 @@ def write_markdown_report(markdown_output: str) -> Path:
 def run_cli(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     journal_root = None
+    concepts_only = False
     query_parts: list[str] = []
     index = 0
     while index < len(args):
@@ -815,6 +853,8 @@ def run_cli(argv: list[str] | None = None) -> int:
             if index >= len(args):
                 raise ValueError("--journal-root requires a value.")
             journal_root = args[index]
+        elif arg == "--concepts":
+            concepts_only = True
         else:
             query_parts.append(arg)
         index += 1
@@ -822,6 +862,22 @@ def run_cli(argv: list[str] | None = None) -> int:
     query = " ".join(query_parts).strip()
     if not query:
         raise ValueError("A natural-language paper search query is required.")
+
+    if concepts_only:
+        concepts = extract_query_concepts(query)
+        payload = {
+            "concepts": [
+                {
+                    "label": concept["label"],
+                    "searchTerms": concept["searchTerms"],
+                    "generic": concept["label"] in GENERIC_CONCEPT_LABELS,
+                }
+                for concept in concepts
+            ],
+            "remoteBundles": build_remote_query_bundles(query, concepts),
+        }
+        sys.stdout.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+        return 0
 
     output = format_paper_search_results(
         run_paper_search(
