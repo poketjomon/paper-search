@@ -11,6 +11,11 @@
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=flat-square)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-14%20passing-brightgreen?style=flat-square)
+![Corpus](https://img.shields.io/badge/local_corpus-11%20top%20venues-orange?style=flat-square)
+![AI backends](https://img.shields.io/badge/AI_backends-claude%20%7C%20codex%20%7C%20openai-blueviolet?style=flat-square)
+![Zotero](https://img.shields.io/badge/Zotero-local%20API-CC2936?style=flat-square)
+![Obsidian](https://img.shields.io/badge/Obsidian-vault%20ready-7C3AED?style=flat-square)
 
 🌐 [简体中文](./README.zh-CN.md) · [English](./README.md) · **繁體中文**　|　[📥 安裝](#-安裝) · [🎬 怎麼用](#-怎麼用) · [📊 它長什麼樣](#-它長什麼樣) · [📚 知識庫歸檔](#-打造你的論文知識庫zotero--obsidian) · [❓ FAQ](#-faq)
 
