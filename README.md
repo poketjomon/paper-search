@@ -27,6 +27,7 @@ Works with Claude Code, Codex, Qoder — any agent framework that can read a `SK
 
 - **Find papers in bulk** — search by topic / venue / year / has-code, with ranked results and per-paper match reasons; weak local coverage is **reported honestly** with an arXiv fallback — no filler results ([full example](./examples/agent_rl_papers_en.md))
 - **30-second go / no-go verdict** — hand it an arXiv / alphaXiv link; sources and confidence levels are stated, gaps never invented
+- **Download paper PDFs** — one sentence downloads one or a batch of arXiv papers locally (batch support, automatic rate-limiting)
 - **Structured deep reading** — problem, method, experiments, limitations in one pass; default mode **never touches your files**
 - **Archive into your knowledge base** — Obsidian notes with formulas, figures, and `[[concept]]` links, plus automatic concept-library maintenance and Zotero organization (only on explicit request)
 - **Zero dependencies** — pure Python standard library; clone and run, nothing to pip install
@@ -69,6 +70,7 @@ Once installed, say any of these in your agent:
 - “Deeply analyze this paper's method, experiment design, and limitations”
 - “Read this paper and archive it to my Obsidian vault”
 - “Export the papers in my Zotero VLA collection to references.bib”
+- “Download the PDF of arXiv 2303.04137 to my Downloads folder”
 - 「帮我找 2024 ICLR 上 diffusion policy 的论文，要有代码」
 - 「快速看一下这篇论文值不值得读：arXiv 2303.04137」
 
@@ -156,7 +158,7 @@ Write filters straight into natural language — no special syntax:
 
 Local data covers 11 top venues (see `search/journal/`); CORL has no bundled data and falls back to arXiv, labeled `Fallback: arXiv`. Results are also saved to `search/outputs/latest_search_results.md`.
 
-### lookup: one-paper brief
+### lookup: one-paper brief + paper download
 
 Accepted inputs: `2303.04137`, `1706.03762v7`, arXiv URLs, alphaXiv URLs.
 
@@ -164,9 +166,14 @@ Accepted inputs: `2303.04137`, `1706.03762v7`, arXiv URLs, alphaXiv URLs.
 ./scripts/run.sh lookup "2303.04137" --format brief          # English brief
 ./scripts/run.sh lookup "2303.04137" --format brief-zh       # Chinese brief
 ./scripts/run.sh lookup --input-file papers.txt --format brief   # batch (one ID per line)
+
+# Download paper PDFs (single or multiple, space- or comma-separated)
+./scripts/run.sh lookup download "2303.04137" --out ~/Downloads/papers
+./scripts/run.sh lookup download "2303.04137,2401.12345" --out ~/Downloads/papers
+./scripts/run.sh lookup download --input-file papers.txt --out ~/Downloads/papers
 ```
 
-Formats: `brief` / `brief-zh` / `markdown` / `text` / `json` / `json-compact`.
+Formats: `brief` / `brief-zh` / `markdown` / `text` / `json` / `json-compact`. Downloads keep a 3-second courtesy gap between papers; failures are reported with exact reasons (not found / rate-limited / not a PDF).
 
 ### reader: deep reading & batch
 

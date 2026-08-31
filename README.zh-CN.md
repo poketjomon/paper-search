@@ -27,6 +27,7 @@
 
 - **找一批论文** — 按主题 / 会议 / 年份 / 有无代码检索，输出排序列表 + 每篇的匹配理由；本地覆盖弱时**如实报告**并回退 arXiv，不拿不相关结果糊弄你（[完整示例](./examples/agent_rl_papers.md)）
 - **30 秒判断值不值得读** — 给一个 arXiv / alphaXiv 链接，输出结论 + 信息来源可信度，缺什么明说，绝不编造
+- **下载论文 PDF** — 一句话把单篇或一批 arXiv 论文下载到本地（支持批量、自动限速）
 - **结构化深读** — 问题、方法、实验、局限一次讲清；默认只分析，**不动你的任何文件**
 - **归档进知识库** — 生成带公式、图表、`[[概念]]` 链接的 Obsidian 笔记，自动维护概念库、整理 Zotero 分类（只在你明确要求时启用）
 - **完全零依赖** — 纯 Python 标准库，clone 下来就能跑，不需要 pip install 任何东西
@@ -69,6 +70,7 @@ ln -s /path/to/papersearch ~/.codex/skills/papersearch
 - 「深度分析这篇论文的方法、实验设计和局限」
 - 「读这篇论文并归档到我的 Obsidian 笔记库」
 - 「把 Zotero 里 VLA 分类的论文导出成 references.bib」
+- 「把 arXiv 2303.04137 的 PDF 下载到我的下载文件夹」
 - "Find 2024 ICLR papers about diffusion policy, preferably with code"
 - "Is this paper worth reading: https://arxiv.org/abs/2303.04137"
 
@@ -156,7 +158,7 @@ Local status: strong
 
 本地数据覆盖 11 个顶会（见 `search/journal/`）；CORL 无本地数据时自动走 arXiv 回退并明确标注 `Fallback: arXiv`。结果同时保存为 `search/outputs/latest_search_results.md`。
 
-### lookup：单篇速览
+### lookup：单篇速览 + 论文下载
 
 支持的输入：`2303.04137`、`1706.03762v7`、arXiv 链接、alphaXiv 链接。
 
@@ -164,9 +166,14 @@ Local status: strong
 ./scripts/run.sh lookup "2303.04137" --format brief-zh   # 中文简报
 ./scripts/run.sh lookup "2303.04137" --format brief      # 英文简报
 ./scripts/run.sh lookup --input-file papers.txt --format brief   # 批量（每行一个 ID）
+
+# 下载论文 PDF 到本地目录（单个或多个）
+./scripts/run.sh lookup download "2303.04137" --out ~/Downloads/papers
+./scripts/run.sh lookup download "2303.04137,2401.12345" --out ~/Downloads/papers
+./scripts/run.sh lookup download --input-file papers.txt --out ~/Downloads/papers
 ```
 
-格式选项：`brief` / `brief-zh` / `markdown` / `text` / `json` / `json-compact`。
+格式选项：`brief` / `brief-zh` / `markdown` / `text` / `json` / `json-compact`。下载时逐篇限速 3 秒，失败会如实报告原因（未找到 / 被限流 / 不是 PDF）。
 
 ### reader：深读与批处理
 

@@ -69,6 +69,7 @@ ln -s /path/to/papersearch ~/.codex/skills/papersearch
 - 「深度分析這篇論文的方法、實驗設計和局限」
 - 「讀這篇論文並歸檔到我的 Obsidian 筆記庫」
 - 「把 Zotero 裡 VLA 分類的論文匯出成 references.bib」
+- 「把 arXiv 2303.04137 的 PDF 下載到我的下載資料夾」
 - "Find 2024 ICLR papers about diffusion policy, preferably with code"
 - "Is this paper worth reading: https://arxiv.org/abs/2303.04137"
 
@@ -156,7 +157,7 @@ Local status: strong
 
 本地資料覆蓋 11 個頂級會議（見 `search/journal/`）；CORL 無本地資料時自動走 arXiv 回退並明確標註 `Fallback: arXiv`。結果同時儲存為 `search/outputs/latest_search_results.md`。
 
-### lookup：單篇速覽
+### lookup：單篇速覽 + 論文下載
 
 支援的輸入：`2303.04137`、`1706.03762v7`、arXiv 連結、alphaXiv 連結。
 
@@ -164,9 +165,14 @@ Local status: strong
 ./scripts/run.sh lookup "2303.04137" --format brief-zh   # 中文簡報
 ./scripts/run.sh lookup "2303.04137" --format brief      # 英文簡報
 ./scripts/run.sh lookup --input-file papers.txt --format brief   # 批量（每行一個 ID）
+
+# 下載論文 PDF 到本地目錄（單個或多個，空格或逗號分隔）
+./scripts/run.sh lookup download "2303.04137" --out ~/Downloads/papers
+./scripts/run.sh lookup download "2303.04137,2401.12345" --out ~/Downloads/papers
+./scripts/run.sh lookup download --input-file papers.txt --out ~/Downloads/papers
 ```
 
-格式選項：`brief` / `brief-zh` / `markdown` / `text` / `json` / `json-compact`。
+格式選項：`brief` / `brief-zh` / `markdown` / `text` / `json` / `json-compact`。下載時逐篇限速 3 秒，失敗會如實報告原因（未找到 / 被限流 / 不是 PDF）。
 
 ### reader：深讀與批處理
 

@@ -913,11 +913,11 @@ def expand_cli_inputs(argv: List[str], input_column: Optional[str] = None) -> Li
             index += 1
             continue
 
-        if token in {"--column", "--format", "--timeout"}:
+        if token in {"--column", "--format", "--timeout", "--out"}:
             index += 2
             continue
 
-        if token.startswith("--column=") or token.startswith("--format=") or token.startswith("--timeout="):
+        if token.startswith("--column=") or token.startswith("--format=") or token.startswith("--timeout=") or token.startswith("--out="):
             index += 1
             continue
 
